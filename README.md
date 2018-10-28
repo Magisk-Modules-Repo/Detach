@@ -6,7 +6,7 @@
  <a href=https://t.me/joinchat/ElFVDxJDgCkDt5Zr_qblGQ"><img src="https://img.shields.io/badge/Telegram-Channel-blue.svg?longCache=true&style=flat-square"></a></p><br />
 
 <h3 align=center>Introduction</h3>
-<h4 align=center>This Module is a portage of the original MOD created by hinxnz - <a href="https://forum.xda-developers.com/member.php?u=1909299">XDA thread/OP</a> to works as a Magisk module for Android.<h4>
+<h4 align=center>This Module is a portage of the original MOD created by hinxnz - <a href="https://forum.xda-developers.com/member.php?u=1909299">XDA thread/OP</a> to works as a Magisk module for Android, so all credits to him/her<h4>
 
 <h4>Short explanation:</h4>
 <h5>With this MOD, you can "detach" app(s) from Google Play Store automatic update, it completly hide the update in the "My games and applications", so no more boring Play Store notification about an update available for your selected app(s)!<br /></h5>
