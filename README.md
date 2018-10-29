@@ -34,19 +34,23 @@
 
 ![screen4](https://image.ibb.co/hL1kMV/Screenshot-20181028-201657.png)<br />
 
-<b>Common: Question and Answers:</b>
+<b>Common: Question and Answers:
 
 Q:A problem ?
+
 A:Ask on XDA OP (scroll up) or/and on Telegram group
 
 Q:When changes are applied ?
+
 A:You must to reboot your device to apply any changes
 
 Q:Apps aren't "hide" in my Play Store!
-A:Try to flash again the module by custom Recovery (CWM,TWRP,..)
+
+A:Try to flash again the module by custom Recovery (CWM,TWRP,..)<br />
 
 Q:How to "attach" again an app who is previously "hided" ?
-A:For now, just remove the package name in '/sbin/.core/img/Detach/service.sh', i work to implement this feature :)
+
+A:Removing Play Store app datas can help with a reboot. Or just remove the `/sbin/.core/img/Detach/service.sh` file, i work to implement this feature :)
 
 Q:Compatibility ?
 - Magisk v17 and newer
@@ -54,10 +58,13 @@ Q:Compatibility ?
 - Substratum themes for Play Store
 
 Q:What does this module do ? Does touch the system partition ?
+
 A:It only edit an SQL database file in Play Store folder on your /data partition
 
 Q:Just after reboot, all unwanted apps stay in my Play Store updates
+
 A:Just wait 1 minute before the Magic appear!
 
 Q:My Play Store history search will be deleted ?
+
 A:No no, why ask that ?
