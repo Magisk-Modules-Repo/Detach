@@ -140,6 +140,8 @@ $LATESTARTSERVICE && cp -af $INSTALLER/common/service.sh $MODPATH/service.sh
 cp -af $INSTALLER/sqlite $MODPATH/sqlite
 
 cp -af $INSTALLER/common/sqlite.txt $MODPATH/sqlite.txt
+chgrp 2000 $MODPATH/sqlite
+chmod 0755 $MODPATH/sqlite
 
 # module scripts base
 ui_print " "
