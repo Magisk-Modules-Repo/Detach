@@ -10,7 +10,7 @@ MODDIR=${0%/*}
 
 # Playstore database and SQLite directory'
 PLAY_DB_DIR=/data/data/com.android.vending/databases
-SQLITE=/magisk/Detach
+SQLITE=$MODDIR
 
 # Wait till boot has completed'
 (while [ 1 ]; do
