@@ -324,7 +324,7 @@ if [ -e $PACKAGES ]; then
 	cp $SQSH $SQSHBAK
 	SQLITE_CMD=$(awk '{ print }' $SQSHBAK)
 	
-	for i in $(cat $BAK); do echo "		./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = \'u-wl\' where doc_id = \'$i\'";" >> $FINALCUST; done
+		for i in $(cat $BAK); do echo "		./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$i'\";" >> $FINALCUST; done
 	
 	cat $MODPATH/detach.custom.final >> $MAGSH
 else
