@@ -103,15 +103,14 @@ set_permissions() {
 basics_apps() {
 DETACH=$MODPATH/tmp_DETACH
 MAGSH=$MODPATH/service.sh
-CONF=/sdcard/detach.txt
 REMOVAL=/sdcard/detach.remove
 BAK=/sdcard/detach.bak
-PACKAGES=/sdcard/detach.custom
 
 test -f $DETACH || touch $DETACH
 
 sed -i -e '30,$d' $MAGSH 2>&1
 
+CONF=$(ls /sdcard/detach.txt || ls /sdcard/Detach.txt) 2>/dev/null;
 if [ -e $CONF ]; then
 	if grep -o '^Gmail' $CONF; then 
 	    echo "  # Gmail" >> $DETACH
