@@ -11,29 +11,35 @@
 <h4>Short explanation:</h4>
 <h5>With this MOD, you can "detach" app(s) from Google Play Store automatic update, it completly hide the update in the "My games and applications", so no more boring Play Store notification about an update available for your selected app(s)!<br /></h5>
 
+## 2 ways to add apps in hiding feature:
+- <b>Detach.txt</b> file for <b>Google common's apps</b> and some others
+- <b>detach.custom</b> file for any other apps
+
 <br />
-<h3>=> For Google common's apps:</h3>
-- You have to download the following file: <a href="https://forum.xda-developers.com/attachment.php?attachmentid=4141103&d=1494126907">detach.txt</a>
-- Saving it on root of your storage like that:
+<h3>For Google common's apps:</h3>
+- You have to download the following file:<img src="https://forum.xda-developers.com/attachment.php?attachmentid=4141103&d=1494126907" alt="detach.txt"height="1200" width="600"></a> 
+- Saving it on root of your storage like that:<br />
 
-![screen1](https://image.ibb.co/kDxwoA/Screenshot-20181025-211140.png)<br />
-
+<img src="https://image.ibb.co/kDxwoA/Screenshot-20181025-211140.png" alt="Screenshot-20181025-211140.png" height="1200" width="600"><br />
+<br />
 <h3>=> As writed</h3>
- - uncomment the app(s) you want to "hiding" from Play Store updates:
+ - uncomment the app(s) you want to "hiding" from Play Store updates:<br />
 
-![screen2](https://image.ibb.co/kCBd1V/Screenshot-20181025-211255.png)<br />
+<img src="https://image.ibb.co/kCBd1V/Screenshot-20181025-211255.png" alt="Screenshot-20181025-211255.png" height="1200" width="600"><br />
 
-<h3>=> For any over apps available on the Play Store:</h3>
-- You have to download the following file: <a href="https://forum.xda-developers.com/attachment.php?attachmentid=4141081&d=1494123950">detach.custom.txt</a>
-- Saving it on root of your storage like that:
+<br />
+<h3>For any over apps:</h3>
+- You have to download this file: <img src="https://forum.xda-developers.com/attachment.php?attachmentid=4141081&d=1494123950" alt="detach.custom.txt" height="1200" width="600"></a>
+- Saving it on root of your storage like that:<br />
 
-![screen3](https://image.ibb.co/mV1kMV/Screenshot-20181028-201636.png)<br />
+<img src="https://image.ibb.co/mV1kMV/Screenshot-20181028-201636.png" alt="Screenshot-20181028-201636.png" height="1200" width="600"><br />
 
 - Write your app(s) package(s) name(s) one by line
-(like the following exemple below)
+(like the following exemple below)<br />
 
-![screen4](https://image.ibb.co/hL1kMV/Screenshot-20181028-201657.png)<br />
-
+<img src="https://image.ibb.co/hL1kMV/Screenshot-20181028-201657.png" alt="Screenshot-20181028-201657.png" height="1200" width="600"><br />
+<br />
+<br />
 <b>Common: Question and Answers:
 
 Q:A problem ?
