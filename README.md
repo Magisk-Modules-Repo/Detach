@@ -11,6 +11,12 @@
 <h4>Short explanation:</h4>
 <h5>With this MOD, you can "detach" app(s) from Google Play Store automatic update, it completly hide the update in the "My games and applications", so no more boring Play Store notification about an update available for your selected app(s)!<br /></h5>
 
+------------------------------------------------------------------------------------
+
+<h5><b>Warning</b>: In a minority of cases, this MOD can purely break the Play Store app, so please backup your phone before setup this MOD on your phone. Thank you for your understanding.</h5>
+
+------------------------------------------------------------------------------------
+
 ## 2 ways to add apps in hiding feature:
 - <b>Detach.txt</b> file for <b>Google common's apps</b> and some others
 - <b>detach.custom</b> file for any other apps
