@@ -1,7 +1,7 @@
 id=Detach
 name=Detach
-version=v2.6.2
-versionCode=262
+version=v2.6.4
+versionCode=264
 author=hinxnz, Rom
 description=Detach Market Links for Theme Ready Apps, originaly created by hinxnz, modded by Rom to works with Magisk v17+.
 minMagisk=17000
