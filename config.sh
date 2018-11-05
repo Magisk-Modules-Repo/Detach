@@ -100,18 +100,58 @@ set_permissions() {
 # difficult for you to migrate your modules to newer template versions.
 # Make update-binary as clean as possible, try to only do function calls in it.
 
+intro() {
+MAGIMG=/sbin/.core/img/
+MAGMOD=$MAGIMG/Detach
+SERVICESH=$MAGMOD/service.sh
+iYTBP=$MAGIMG/iYTBP-Vanced-Magisk-Repo
+iYTBPBLACK=$MAGIMG/iYTBP-Vanced-black-Magisk-Repo
+iYTBPSH=$iYTBP/post-fs-data.sh
+iYTBPBLACKSH=$iYTBPBLACK/post-fs-data.sh
+SYSAD=/system/addon.d
+iYTBSYSADD=$SYSAD/97-ytva.sh
+iYTBSYSSYSADD=/system/$SYSAD/97-ytva.sh
+
+MAGFILE=$(ls /data/$adb/magisk.img || ls /cache/magisk.img) 2>/dev/null;
+if [ ! -d "$MAGIMG" ]; then
+	mkdir -p $MAGIMG
+	mount -t ext4 -o rw $MAGFILE $MAGIMG
+fi
+
+if [ -e "$iYTBPSH" ] || [ -e "$iYTBPBLACKSH" ] || [ -e "$iYTBSYSADD" } || [ -e "iYTBSYSSYSADD" ]; then
+	echo -e "\n\n ! Detach feature of iYTBP Vanced for Magisk has been detected in your modules folder.\n\nIt's incompatible with this module, the post-fs-data.sh file is going to be renamed to:\npost-fs-data.sh.bak\n\n\n"
+	mv $iYTBPSH $iYTBP/post-fs-data.sh.bak 2>/dev/null
+	mv $iYTBPBLACKSH $iYTBPBLACK/post-fs-data.sh.bak 2>/dev/null
+	rm -f $iYTBSYSADD 2>/dev/null
+	rm -f $iYTBSYSSYSADD 2>/dev/null
+fi
+
+
+CTSERVICESH=`awk 'END{print NR}' $SERVICESH`
+
+if [ "$CTSERVICESH" -gt "30" ]; then
+	echo -e "\nPreparring file..\n"
+	sed -i -e '30,$d' $SERVICESH
+fi
+
+echo -e "\n- Prepare done\n\n\n"
+}
+
 basics_apps() {
 DETACH=$MODPATH/tmp_DETACH
 MAGSH=$MODPATH/service.sh
-REMOVAL=/sdcard/detach.remove
-BAK=/sdcard/detach.bak
 
 test -f $DETACH || touch $DETACH
-
-sed -i -e '30,$d' $MAGSH 2>&1
+chmod 0644 $DETACH
 
 CONF=$(ls /sdcard/detach.txt || ls /sdcard/Detach.txt) 2>/dev/null;
-if [ -e $CONF ]; then
+
+if [ -e "$CONF" ]; then
+	
+	cp $CONF $MODPATH
+	chmod 0644 $MODPATH/detach.txt
+	echo -e "\n=> ${CONF} file found\n=> Following basic app(s) will be hidden:\n"
+	
 	if grep -o '^Gmail' $CONF; then 
 	    echo "  # Gmail" >> $DETACH
 	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.gm\''";' >> $DETACH
@@ -290,50 +330,58 @@ if [ -e $CONF ]; then
 	fi
 	if grep -o '^Google Carrier Services' $CONF; then 
 	        echo '  # Google Carrier Services' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.ims\''";' >> $DETACH 
+	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.ims\''";' >> $DETACH
 	fi
+	cat $DETACH >> $MAGSH
+	echo " " >> $MAGSH
+	rm -f $DETACH
+	echo -e "\n\n"
+else
+	echo -e "\n=> No basic app added\n\n\n"
+	break
 fi
-
-cat $DETACH >> $MAGSH
-echo " " >> $MAGSH
-rm -f $DETACH
 }
 
 custom_apps() {
-PACKAGES=/sdcard/detach.custom
+PACKAGES=$(ls /sdcard/detach.custom || ls /sdcard/detach.custom.txt || ls /sdcard/DETACH.CUSTOM || ls /sdcard/DETACH.CUSTOM.txt) 2>/dev/null;
 BAK=$MODPATH/detach.custom.bak
 FINALCUST=$MODPATH/detach.custom.final
-CUSTOM=$MODPATH/tmp_service.sh
 MAGSH=$MODPATH/service.sh
 SQSH=$MODPATH/sqlite.txt
 SQSHBAK=$MODPATH/sqlite.bak
 
 if [ -e $PACKAGES ]; then
 	
+	echo -e "\n=> ${PACKAGES} file found\n=> Following custom apps will be hidden:\n"
+	cat "$PACKAGES"
+	
 	test -f $BAK || touch $BAK
-	test -f $CUSTOM || touch $CUSTOM
 	test -f $FINALCUST || touch $FINALCUST
 	
+	cp -f $PACKAGES $BAK
 	chmod 0644 $BAK
-	cp /dev/null $BAK
-
-	cp -af $PACKAGES $BAK
-
+	
 	echo "# Custom Packages" >> $FINALCUST
-
+	
 	cp $SQSH $SQSHBAK
+	chmod 0644 $SQSHBAK
 	SQLITE_CMD=$(awk '{ print }' $SQSHBAK)
 	
-		for i in $(cat $BAK); do echo "		./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$i'\";" >> $FINALCUST; done
+	for i in $(cat $BAK); do echo "		./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$i'\";" >> $FINALCUST; done
 	
-	cat $MODPATH/detach.custom.final >> $MAGSH
+	cat $FINALCUST >> $MAGSH
+	
+	echo -e "\n- Custom apps has been added successfully\n\n\n"
+	
 else
-	exit
+	echo -e "\n=> No custom app added\n\n\n"
+	break
 fi
 
+rm -f $FINALCUST 2>/dev/null
+rm -f $SQSHBAK 2>/dev/null
 rm -f $SQSH 2>/dev/null
 rm -f $BAK 2>/dev/null
-rm -f $CUSTOM 2>/dev/null
 }
 
 final() {
@@ -341,5 +389,5 @@ echo "" >> $MAGSH
 echo "# Exit" >> $MAGSH 
 echo "	exit; fi" >> $MAGSH 
 echo "done &)" >> $MAGSH 
-echo "" >> $MAGSH
+echo -e "\nBoot script file is now finished.\n- Just reboot now :)\n\n\n"
 }
