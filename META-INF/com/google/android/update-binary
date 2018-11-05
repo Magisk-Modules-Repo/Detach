@@ -145,6 +145,9 @@ chmod 0755 $MODPATH/sqlite
 
 # module scripts base
 ui_print " "
+ui_print " "
+ui_print "- Prepare stuff"
+intro
 ui_print "- Checking for basic apps"
 basics_apps
 ui_print "- Checking for custom apps"
