@@ -62,16 +62,16 @@ A:Try to flash again the module by custom Recovery (CWM,TWRP,..)<br />
 
 Q:How to "attach" again an app who is previously "hided" ?
 
-A:Removing Play Store app datas can help with a reboot. Or just remove the `/sbin/.core/img/Detach/service.sh` file, i work to implement this feature :)
+A:Removing Play Store app datas can help with a reboot. Or just remove the `/sbin/.magisk/img/Detach/service.sh` file, i work to implement this feature :)
 
 Q:Compatibility ?
-- Magisk v17 and newer
+- Magisk v18 and newer
 - All Android/Devices/Archs supported
 - Substratum themes for Play Store
 
 Q:What does this module do ? Does touch the system partition ?
 
-A:It only edit an SQL database file in Play Store folder on your /data partition
+A:It only edit an SQL database file in Play Store folder on your /data partition. No more, no less.
 
 Q:Just after reboot, all unwanted apps stay in my Play Store updates
 
