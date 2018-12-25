@@ -112,16 +112,17 @@ iYTBPBLACKSH=$iYTBPBLACK/post-fs-data.sh
 SYSAD=/system/addon.d
 iYTBSYSADD=$SYSAD/97-ytva.sh
 iYTBSYSSYSADD=/system/$SYSAD/97-ytva.sh
-BBPATH=$MAGIMG/busybox-ndk
-BBVERSION=`grep versionCode= $BBPATH/module.prop | sed 's/versionCode=//'`
 
 echo -e "\n- Prepare stuff\n"
 
-MAGFILE=$(ls /data/$adb/magisk.img || ls /cache/magisk.img) 2>/dev/null;
+MAGFILE=$(ls /data/adb/magisk.img || ls /cache/magisk.img) 2>/dev/null;
 if [ ! -d "$MAGIMG" ]; then
 	mkdir -p "$MAGIMG"
 	mount -t ext4 -o rw "$MAGFILE" "$MAGIMG"
 fi
+
+BBPATH=$MAGIMG/busybox-ndk
+BBVERSION=`grep versionCode= $BBPATH/module.prop | sed 's/versionCode=//'`
 
 if [[ -d "$BBPATH" && "$BBVERSION" -ge "12932" && ! -e "$BBPATH/.replace" ]]; then
 	break
@@ -164,254 +165,182 @@ chmod 0660 $DETACH
 	if grep -o '^Gmail' $CONF; then 
 	    echo "  # Gmail" >> $DETACH
 	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.gm\''";' >> $DETACH
-		echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.gm\''";' >> $DETACH
-		echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.gm\''";' >> $DETACH
 	    echo '' >> $DETACH
 	fi
 	if grep -o '^Google App' $CONF; then 
 	    echo '  # Google App' >> $DETACH
 	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.googlequicksearchbox\''";' >> $DETACH
-		echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.googlequicksearchbox\''";' >> $DETACH
-		echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.googlequicksearchbox\''";' >> $DETACH
 	    echo '' >> $DETACH
 	fi
 	if grep -o '^Google Plus' $CONF; then 
 	    echo '  # Google Plus' >> $DETACH
 	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.plus\''";' >> $DETACH
-		echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.apps.plus\''";' >> $DETACH
-		echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.apps.plus\''";' >> $DETACH
 	    echo '' >> $DETACH
 	fi
 	if grep -o '^Hangouts' $CONF; then 
 	    echo '  # Hangouts' >> $DETACH
 	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.talk\''";' >> $DETACH
-		echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.talk\''";' >> $DETACH
-		echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.talk\''";' >> $DETACH
 	    echo '' >> $DETACH
 	fi
 	if grep -o '^YouTube' $CONF; then 
 	    echo '  # YouTube' >> $DETACH
 	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.youtube\''";' >> $DETACH
-		echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.youtube\''";' >> $DETACH
-		echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.youtube\''";' >> $DETACH
 	    echo '' >> $DETACH
 	fi
 	if grep -o '^Gboard' $CONF; then 
 	    echo '  # Gboard' >> $DETACH
 	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.inputmethod.latin\''";' >> $DETACH
-		echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.inputmethod.latin\''";' >> $DETACH
-		echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.inputmethod.latin\''";' >> $DETACH
 	    echo '' >> $DETACH
 	fi
 	if grep -o '^Contacts' $CONF; then 
 		echo '  # Contacts' >> $DETACH
 	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.contacts\''";' >> $DETACH
-		echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.contacts\''";' >> $DETACH
-		echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.contacts\''";' >> $DETACH
 	    echo '' >> $DETACH
 		fi
 	if grep -o '^Phone' $CONF; then 
 	    echo '  # Phone' >> $DETACH
 	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.dialer\''";' >> $DETACH
-		echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.dialer\''";' >> $DETACH
-		echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.dialer\''";' >> $DETACH
 	    echo '' >> $DETACH
 	fi
 	if grep -o '^Photos' $CONF; then 
-	    	echo '  # Photos' >> $DETACH
-	    	echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.photos\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.apps.photos\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.apps.photos\''";' >> $DETACH
-	    	echo '' >> $DETACH
+	    echo '  # Photos' >> $DETACH
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.photos\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Clock' $CONF; then 
-	        echo '  # Clock' >> $DETACH
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.deskclock\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.deskclock\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.deskclock\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Clock' >> $DETACH
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.deskclock\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Camera' $CONF; then 
-	        echo '  # Camera' >> $DETACH
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.GoogleCamera\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.GoogleCamera\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.GoogleCamera\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Camera' >> $DETACH
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.GoogleCamera\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Inbox' $CONF; then 
-	        echo '  # Inbox' >> $DETACH
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.inbox\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.apps.inbox\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.apps.inbox\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Inbox' >> $DETACH
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.inbox\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Duo' $CONF; then 
-	        echo '  # Duo' >> $DETACH
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.tachyon\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.apps.tachyon\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.apps.tachyon\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Duo' >> $DETACH
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.tachyon\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Dropbox' $CONF; then 
-	        echo '  # Dropbox' >> $DETACH
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.dropbox.android\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.dropbox.android\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.dropbox.android\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Dropbox' >> $DETACH
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.dropbox.android\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^PushBullet' $CONF; then 
-	        echo '  # PushBullet' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.pushbullet.android\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.pushbullet.android\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.pushbullet.android\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # PushBullet' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.pushbullet.android\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Calendar' $CONF; then 
-	        echo '  # Calendar' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.calendar\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.calendar\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.calendar\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Calendar' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.calendar\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Keep' $CONF; then 
-	        echo '  # Keep' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.keep\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.keep\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.keep\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Keep' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.keep\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Telegram' $CONF; then 
-	        echo '  # Telegram' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'org.telegram.messenger\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'org.telegram.messenger\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'org.telegram.messenger\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Telegram' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'org.telegram.messenger\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Swiftkey' $CONF; then 
-	        echo '  # Swiftkey' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.touchtype.swiftkey\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.touchtype.swiftkey\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.touchtype.swiftkey\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Swiftkey' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.touchtype.swiftkey\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Translate' $CONF; then 
-	        echo '  # Translate' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.translate\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.apps.translate\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.apps.translate\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Translate' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.translate\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Facebook' $CONF; then 
-	        echo '  # Facebook' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.facebook.katana\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.facebook.katana\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.facebook.katana\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Facebook' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.facebook.katana\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Pandora' $CONF; then 
-	        echo '  # Pandora' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.pandora.android\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.pandora.android\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.pandora.android\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Pandora' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.pandora.android\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Twitter' $CONF; then 
-	        echo '  # Twitter' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.twitter.android\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.twitter.android\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.twitter.android\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Twitter' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.twitter.android\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Slack' $CONF; then 
-	        echo '  # Slack' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.Slack\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.Slack\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.Slack\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Slack' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.Slack\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Mega' $CONF; then 
-	        echo '  ' >> $DETACH 
-	        echo '  # Mega' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'mega.privacy.android.app\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'mega.privacy.android.app\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'mega.privacy.android.app\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  ' >> $DETACH 
+	    echo '  # Mega' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'mega.privacy.android.app\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^WhatsApp' $CONF; then 
-	        echo '  # WhatsApp' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.whatsapp\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.whatsapp\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.whatsapp\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # WhatsApp' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.whatsapp\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Voice' $CONF; then 
-	        echo '  # Voice' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.googlevoice\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.apps.googlevoice\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.apps.googlevoice\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Voice' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.googlevoice\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Drive' $CONF; then 
-	        echo '  # Drive' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.docs\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.apps.docs\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.apps.doc\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Drive' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.docs\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Netflex' $CONF; then 
-	        echo '  # Netflex' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.netflix.mediaclient\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.netflix.mediaclient\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.netflix.mediaclient\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Netflex' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.netflix.mediaclient\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
-		if grep -o '^Pixel Launcher' $CONF; then 
-	        echo '  # Pixel Launcher' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.nexuslauncher\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.apps.nexuslauncher\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.apps.nexuslauncher\''";' >> $DETACH
-	        echo '' >> $DETACH
+	if grep -o '^Pixel Launcher' $CONF; then 
+	    echo '  # Pixel Launcher' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.nexuslauncher\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Wallpapers' $CONF; then 
-	        echo '  # Wallpapers' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.wallpaper\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.apps.wallpaper\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.apps.wallpaper\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Wallpapers' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.wallpaper\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Capture' $CONF; then 
-	        echo '  # Capture' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.gopro.smarty\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.gopro.smarty\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.gopro.smarty\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Capture' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.gopro.smarty\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Google Connectivity Services' $CONF; then 
-	        echo '  # Google Connectivity Services' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.gcs\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.apps.gcs\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.apps.gcs\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Google Connectivity Services' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.apps.gcs\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Google VR Services' $CONF; then 
-	        echo '  # Google VR Services' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.vr.vrcore\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.vr.vrcore\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.vr.vrcore\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Google VR Services' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.vr.vrcore\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Google Play Services' $CONF; then 
-	        echo '  # Google Play Services' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.gms\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.gms\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.gms\''";' >> $DETACH
-	        echo '' >> $DETACH
+	    echo '  # Google Play Services' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.gms\''";' >> $DETACH
+	    echo '' >> $DETACH
 	fi
 	if grep -o '^Google Carrier Services' $CONF; then 
-	        echo '  # Google Carrier Services' >> $DETACH 
-	        echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.ims\''";' >> $DETACH
-			echo '  	./sqlite $PLAY_DB_DIR/localappstate.db "DELETE from appstate where package_name = \'com.google.android.ims\''";' >> $DETACH
-			echo '  	./sqlite $SV_PLAY_DB_DIR/PackagesDB "DELETE from Packages where pkgName = \'com.google.android.ims\''";' >> $DETACH
+	    echo '  # Google Carrier Services' >> $DETACH 
+	    echo '  	./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = '\'u-wl\' where doc_id = \'com.google.android.ims\''";' >> $DETACH
 	fi
 	cat $DETACH >> $MAGSH
 	echo " " >> $MAGSH
@@ -434,27 +363,32 @@ SQSHBAK=$MODPATH/sqlite.bak
 if [ -e $PACKAGES ]; then
 	
 	echo -e "\n=> ${PACKAGES} file found"; sleep 2;
-	echo -e "\n=> Following custom apps will be hidden:\n"
-	cat "$PACKAGES"
+	cust_line=$(sed -n '1p' $PACKAGES)
+	if [[ -z "$cust_line" ]]; then
+		echo -e "\n\nWOW WOW WOW BE CAREFUL!\n\nYour \""$PACKAGES"\" file is empty!\n\n=> So we're going to forget it just for this time.\n\n"
+		break
+	else
+		echo -e "\n=> Following custom apps will be hidden:\n"
+		cat "$PACKAGES"
 	
-	test -f $BAK || touch $BAK
-	test -f $FINALCUST || touch $FINALCUST
+		test -f $BAK || touch $BAK
+		test -f $FINALCUST || touch $FINALCUST
 	
-	cp -f $PACKAGES $BAK
-	chmod 0644 $BAK
+		cp -f $PACKAGES $BAK
+		chmod 0644 $BAK
 	
-	echo "# Custom Packages" >> $FINALCUST
+		echo "# Custom Packages" >> $FINALCUST
 	
-	cp $SQSH $SQSHBAK
-	chmod 0644 $SQSHBAK
-	SQLITE_CMD=$(awk '{ print }' $SQSHBAK)
+		cp $SQSH $SQSHBAK
+		chmod 0644 $SQSHBAK
+		SQLITE_CMD=$(awk '{ print }' $SQSHBAK)
 	
-	for i in $(cat $BAK); do echo -e "		./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$i'\";" >> $FINALCUST; done
+		for i in $(cat $BAK); do echo -e "		./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$i'\";" >> $FINALCUST; done
 	
-	cat $FINALCUST >> $MAGSH
+		cat $FINALCUST >> $MAGSH
 	
-	echo -e "\n\n- Custom apps has been added successfully\n\n\n"
-	
+		echo -e "\n\n- Custom apps has been added successfully\n\n\n"
+	fi
 else
 	echo -e "\n=> No custom app added\n\n\n"
 	break
