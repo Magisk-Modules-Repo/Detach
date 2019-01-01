@@ -353,7 +353,7 @@ fi
 }
 
 custom_apps() {
-PACKAGES=$(ls /sdcard/detach.custom || ls /sdcard/detach.custom.txt || ls /sdcard/DETACH.CUSTOM || ls /sdcard/DETACH.CUSTOM.TXT) 2>/dev/null;
+PACKAGES=$(ls /sdcard/detach.custom || ls /sdcard/detach.custom.txt || ls /sdcard/DETACH.CUSTOM || ls /sdcard/DETACH.CUSTOM.TXT || ls /sdcard/Detach.custom.txt || ls /sdcard/Detach.Custom.txt) 2>/dev/null;
 BAK=$MODPATH/detach.custom.bak
 FINALCUST=$MODPATH/detach.custom.final
 MAGSH=$MODPATH/service.sh
@@ -363,7 +363,9 @@ SQSHBAK=$MODPATH/sqlite.bak
 if [ -e $PACKAGES ]; then
 	
 	echo -e "\n=> ${PACKAGES} file found"; sleep 2;
+	
 	cust_line=$(sed -n '1p' $PACKAGES)
+	
 	if [[ -z "$cust_line" ]]; then
 		echo -e "\n\nWOW WOW WOW BE CAREFUL!\n\nYour \""$PACKAGES"\" file is empty!\n\n=> So we're going to forget it just for this time.\n\n"
 		break
@@ -406,5 +408,6 @@ echo "" >> $MAGSH
 echo "# Exit" >> $MAGSH 
 echo "	exit; fi" >> $MAGSH 
 echo "done &)" >> $MAGSH 
+
 echo -e "\nBoot script file is now finished.\n- Just reboot now :)\n\n\n"; sleep 2;
 }
