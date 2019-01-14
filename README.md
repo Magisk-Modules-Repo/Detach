@@ -77,6 +77,14 @@ Q:Just after reboot, all unwanted apps stay in my Play Store updates
 
 A:Just wait 1 minute before the Magic appear!
 
+Q: After several hours, my detached app(s) are back in my Play Store, what's wrong ?
+
+A: With a recent update of the Play Store, an unknow wakeloks refresh the SQL database file of the Play Store. To fix it, just install Terminal Emulator or Termux (or another terminal emulator app) and type:
+- su
+- Detach
+
+(2 other options has been added into the menu but use them <b>ONLY</b> if you know what you want !)
+
 Q:My Play Store history search will be deleted ?
 
-A:No no, why ask that ?
+A:<b>ONLY</b> if you select the 'c' option in the terminal menu (as indicated in the menu)
