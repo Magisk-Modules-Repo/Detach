@@ -1,0 +1,92 @@
+#!/system/bin/sh
+# ======================================================================
+# Module: Detach
+
+menu() {
+if [ -z "$(ls -A /sbin/.magisk/img/)" ]; then
+	MAGIMG=/sbin/.core/img
+else
+	MAGIMG=/sbin/.magisk/img
+fi
+MAGMOD=$MAGIMG/Detach
+SERVICESH=$MAGMOD/service.sh
+echo " "
+
+cat <<EOD
+
+
+
+
+
+	Detach menu
+	
+	d) Instant Detach
+	k) Kill Play Store app
+	c) Clear Play Store app data
+	
+	x) Exit
+	
+	
+	
+EOD
+
+echo 'Make your choice:'
+
+
+
+read menuchoice
+features
+}
+
+
+
+features() {
+case $menuchoice in
+	*d* ) d;;
+	*k* ) k;;
+	*c* ) c;;
+	*x* ) exxit;;
+	* ) features;;
+esac;
+}
+
+
+d() {
+instant_run=$MAGMOD/instant_run.sh
+
+
+test -e $instant_run || touch $instant_run
+chmod 0777 $instant_run
+chmod +x $instant_run
+
+cat /dev/null > $instant_run
+
+echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=/sbin/.core/img/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> $instant_run
+
+grep sqlite $SERVICESH >> $instant_run
+sed -i -e 's/.\t\/sqlite/.\/sqlite/' $instant_run 2>/dev/null
+sed -i -e 's/..\/sqlite/.\/sqlite/' $instant_run 2>/dev/null
+
+echo -e " " >> $instant_run
+
+sh $instant_run
+am force-stop com.android.vending
+}
+
+k() {
+am force-stop com.android.vending
+am stopservice 'com.android.vending/com.google.android.finsky.dailyhygiene.DailyHygiene'$'DailyHygieneService'; 2>/dev/null
+am stopservice 'com.android.vending/com.google.android.finsky.hygiene.DailyHygiene'$'DailyHygieneService'; 2>/dev/null
+echo -e "\nDone\n"
+}
+
+c() {
+pm clear com.android.vending
+echo -e "\nDone\n"
+}
+
+x() {
+exit
+}
+
+menu
