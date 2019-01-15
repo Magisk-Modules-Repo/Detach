@@ -23,7 +23,7 @@
 
 <br />
 <h3>For Google common's apps:</h3>
-- You have to download the following file:<img src="https://raw.githubusercontent.com/xerta555/Detach-Files/master/detach.txt" alt="detach.txt"height="1200" width="600"></a> 
+- You have to download the following file:<a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/detach.txt" ">detach.txt</a> 
 - Saving it on root of your storage like that:<br />
 
 <img src="https://image.ibb.co/kDxwoA/Screenshot-20181025-211140.png" alt="Screenshot-20181025-211140.png" height="1200" width="600"><br />
@@ -35,7 +35,7 @@
 
 <br />
 <h3>For any over apps:</h3>
-- You have to download this file: <img src="https://raw.githubusercontent.com/xerta555/Detach-Files/master/detach.custom.txt" alt="detach.custom.txt" height="1200" width="600"></a>
+- You have to download this file: <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/detach.custom.txt" ">detach.custom.txt</a>
 - Saving it on root of your storage like that:<br />
 
 <img src="https://image.ibb.co/mV1kMV/Screenshot-20181028-201636.png" alt="Screenshot-20181028-201636.png" height="1200" width="600"><br />
