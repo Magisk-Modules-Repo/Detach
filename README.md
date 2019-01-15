@@ -23,7 +23,7 @@
 
 <br />
 <h3>For Google common's apps:</h3>
-- You have to download the following file:<a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/detach.txt" "> detach.txt</a> 
+- You have to download the following file: <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/detach.txt" ">detach.txt</a> 
  
 - Saving it on root of your storage like that:<br />
 
