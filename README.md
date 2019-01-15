@@ -64,7 +64,7 @@ A:Try to flash again the module by custom Recovery (CWM,TWRP,..)<br />
 
 Q:How to "attach" again an app who is previously "hided" ?
 
-A:Removing Play Store app datas can help with a reboot. Or just remove the `/sbin/.magisk/img/Detach/service.sh` file, i work to implement this feature :)
+A:Just comment again the app name in the detach.txt file or delete the corresponding package name in the detach.custom file. Or if you are not afraid of anything, remove Play Store app datas but you will loose your Play Store apps updates history. Or just remove the `/sbin/.magisk/img/Detach/service.sh` file, i work to implement this feature :)
 
 Q:Compatibility ?
 - Magisk v18 and newer
