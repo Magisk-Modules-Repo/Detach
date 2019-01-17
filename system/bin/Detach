@@ -8,6 +8,7 @@ if [ -z "$(ls -A /sbin/.magisk/img/)" ]; then
 else
 	MAGIMG=/sbin/.magisk/img
 fi
+
 MAGMOD=$MAGIMG/Detach
 SERVICESH=$MAGMOD/service.sh
 echo " "
@@ -15,7 +16,8 @@ echo " "
 cat <<EOD
 
 
-
+(! Be careful about the c option, because it will delete the data of
+your Play Store app !)
 
 
 	Detach menu
@@ -52,9 +54,9 @@ esac;
 
 
 d() {
+echo -e "\nWorks in progress...\n"; sleep 2;
+
 instant_run=$MAGMOD/instant_run.sh
-
-
 test -e $instant_run || touch $instant_run
 chmod 0777 $instant_run
 chmod +x $instant_run
@@ -71,22 +73,32 @@ echo -e " " >> $instant_run
 
 sh $instant_run
 am force-stop com.android.vending
+echo -e "\nDone\n"
 }
 
 k() {
+echo -e "\nForce closing the Play Store app...\n"; sleep 2;
 am force-stop com.android.vending
-am stopservice 'com.android.vending/com.google.android.finsky.dailyhygiene.DailyHygiene'$'DailyHygieneService'; 2>/dev/null
-am stopservice 'com.android.vending/com.google.android.finsky.hygiene.DailyHygiene'$'DailyHygieneService'; 2>/dev/null
 echo -e "\nDone\n"
 }
 
 c() {
+echo -e "\nWorks in progress...\n"; sleep 2;
 pm clear com.android.vending
 echo -e "\nDone\n"
 }
 
-x() {
+exxit() {
 exit
 }
+
+alias echo="/sbin/.core/busybox/echo"
+alias ls="/sbin/.core/busybox/ls"
+alias cat="/sbin/.core/busybox/cat"
+alias grep="/sbin/.core/busybox/grep"
+alias sed="/sbin/.core/busybox/grep"
+alias chmod="/sbin/.core/busybox/chmod"
+alias test="/sbin/.core/busybox/test"
+
 
 menu
