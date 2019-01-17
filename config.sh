@@ -102,6 +102,17 @@ set_permissions() {
 # Make update-binary as clean as possible, try to only do function calls in it.
 
 intro() {
+alias echo="/sbin/.core/busybox/echo"
+alias ls="/sbin/.core/busybox/ls"
+alias mount="/sbin/.core/busybox/mount"
+alias awk="/sbin/.core/busybox/awk"
+alias cat="/sbin/.core/busybox/cat"
+alias grep="/sbin/.core/busybox/grep"
+alias sed="/sbin/.core/busybox/grep"
+alias chmod="/sbin/.core/busybox/chmod"
+alias test="/sbin/.core/busybox/test"
+
+
 MAGIMG=/sbin/.magisk/img
 MAGMOD=$MAGIMG/Detach
 SERVICESH=$MAGMOD/service.sh
@@ -121,16 +132,6 @@ if [ ! -d "$MAGIMG" ]; then
 	mount -t ext4 -o rw "$MAGFILE" "$MAGIMG"
 fi
 
-BBPATH=$MAGIMG/busybox-ndk
-BBVERSION=`grep versionCode= $BBPATH/module.prop | sed 's/versionCode=//'`
-
-if [[ -d "$BBPATH" && "$BBVERSION" -ge "12932" && ! -e "$BBPATH/.replace" ]]; then
-	break
-else
-	echo -e '\n\n! Busybox is not installed\n\n\n\nOr maybe you have to:\n\n=> Enable Busybox for Android NDK in your Magisk Manager\n=> Reboot your device\n=> Try again\n\n'; sleep 4;
-	exit 1
-fi
-
 if [ \( -e "$iYTBPSH" \) -o \( -e "$iYTBPBLACKSH" \) -o \( -e "$iYTBSYSADD" \) -o \( -e "iYTBSYSSYSADD" \) ]; then
 	echo -e "\n\n ! Detach feature of iYTBP Vanced for Magisk has been detected in your modules folder.\n\nIt's incompatible with this module, the post-fs-data.sh file is going to be renamed to:\npost-fs-data.sh.bak\n\n\n"
 	mv "$iYTBPSH" "$iYTBP/post-fs-data.sh.bak" 2>/dev/null
@@ -147,6 +148,7 @@ if [ "$CTSERVICESH" -gt "30" ]; then
 fi
 
 echo -e "- Prepare done\n\n"
+
 }
 
 basics_apps() {
@@ -360,7 +362,7 @@ MAGSH=$MODPATH/service.sh
 SQSH=$MODPATH/sqlite.txt
 SQSHBAK=$MODPATH/sqlite.bak
 
-if [ -e $PACKAGES ]; then
+if [ -e "$PACKAGES" ]; then
 	
 	echo -e "\n=> ${PACKAGES} file found"; sleep 2;
 	
@@ -392,14 +394,14 @@ if [ -e $PACKAGES ]; then
 		echo -e "\n\n- Custom apps has been added successfully\n\n\n"
 	fi
 else
-	echo -e "\n=> No custom app added\n\n\n"
+	echo -e "\n=> No custom app added\n\n\n"; sleep 2;
 	break
 fi
 
-rm -f $FINALCUST 2>/dev/null
-rm -f $SQSHBAK 2>/dev/null
-rm -f $SQSH 2>/dev/null
-rm -f $BAK 2>/dev/null
+rm -f "$FINALCUST" 2>/dev/null
+rm -f "$SQSHBAK" 2>/dev/null
+rm -f "$SQSH" 2>/dev/null
+rm -f "$BAK" 2>/dev/null
 }
 
 final() {
