@@ -183,7 +183,7 @@ if [ "$MAGISK_VER_CODE" -ge "19000" ]; then
 	
 	CONF=$(ls /sdcard/detach.txt || ls /sdcard/Detach.txt || ls /sdcard/DETACH.txt) 2>/dev/null;
 
-	if [ -e "$CONF" ] && [ -n $(cat "$CONF" | tail -n +5 | grep -v -e "#.*") ]; then
+	if [ -e "$CONF" ] &&  && [ ! -z $(cat "$CONF" | tail -n +5 | grep -v -e "#.*") ]; then
 
 		DETACH=$TMPDIR/tmp_DETACH
 		MAGSH=$TMPDIR/service.sh
