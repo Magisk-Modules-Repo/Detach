@@ -1,6 +1,6 @@
 id=Detach
 name=Detach
-version=v2.6.5
-versionCode=265
+version=v2.7
+versionCode=27
 author=hinxnz, Rom
-description=Detach Market Links for Theme Ready Apps, originaly created by hinxnz, ported by Rom to works with Magisk v17+.
+description=Detach Market Links for Theme Ready Apps, originaly created by hinxnz, ported by Rom to works with Magisk
