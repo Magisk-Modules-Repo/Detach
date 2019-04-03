@@ -136,6 +136,7 @@ on_install() {
   # Extend/change the logic to whatever you want
   ui_print "- Extracting module files"
   unzip -o "$ZIPFILE" 'system/*' -d $MODPATH >&2
+  unzip -o "$ZIPFILE" 'sqlite' -d $MODPATH >&2
 }
 
 # Only some special files require specific permissions
@@ -182,8 +183,8 @@ if [ "$MAGISK_VER_CODE" -ge "19000" ]; then
 	# ================================================================================================
 	
 	CONF=$(ls /sdcard/detach.txt || ls /sdcard/Detach.txt || ls /sdcard/DETACH.txt) 2>/dev/null;
-
-	if [ -e "$CONF" ] &&  [ ! -z $(cat "$CONF" | tail -n +5 | grep -v -e "#.*") ]; then
+	CHECK=`cat "$CONF" | tail -n +5 | grep -v -e "#.*"`
+	if [ -e "$CONF" ] &&  [ ! -z "$CHECK" ]; then
 
 		DETACH=$TMPDIR/tmp_DETACH
 		MAGSH=$TMPDIR/service.sh
@@ -472,5 +473,3 @@ if [ "$MAGISK_VER_CODE" -ge "19000" ]; then
 
 	# ================================================================================================
 fi
-
-	
