@@ -11,6 +11,11 @@
 <h4>Short explanation:</h4>
 <h5>With this MOD, you can "detach" app(s) from Google Play Store automatic update, it completly hide the update in the "My games and applications", so no more boring Play Store notification about an update available for your selected app(s)!<br /></h5>
 
+<b>Compatibility</b>
+- Magisk v19 at least
+- All Android device from Lollipop to Pie
+- Substratum themes for Play Store
+
 ------------------------------------------------------------------------------------
 
 <h5><b>Warning</b>: In a minority of cases, this MOD can purely break the Play Store app, so please backup your phone before setup this MOD on your phone. Thank you for your understanding.</h5>
@@ -65,11 +70,6 @@ A:Try to flash again the module by custom Recovery (CWM,TWRP,..)<br />
 Q:How to "attach" again an app who is previously "hided" ?
 
 A:Just comment again the app name in the detach.txt file or delete the corresponding package name in the detach.custom file. Or if you are not afraid of anything, remove Play Store app datas but you will loose your Play Store apps updates history. Or just remove the `/sbin/.magisk/img/Detach/service.sh` file, i work to implement this feature :)
-
-Q:Compatibility ?
-- Magisk v18 and newer
-- All Android/Devices/Archs supported
-- Substratum themes for Play Store
 
 Q:What does this module do ? Does touch the system partition ?
 
