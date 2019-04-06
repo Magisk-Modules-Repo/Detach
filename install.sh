@@ -160,7 +160,42 @@ set_permissions() {
 
 # ================================================================================================
 #!/system/bin/sh
-if [ "$MAGISK_VER_CODE" -ge "19000" ]; then
+magisk=$(ls /data/adb/magisk/magisk || ls /sbin/magisk) 2>/dev/null;
+alias wget=$(ls /sbin/.core/busybox/wget || ls /sbin/.magisk/busybox/wget) 2>/dev/null;
+alias grep=$(ls /sbin/.core/busybox/grep || ls /sbin/.magisk/busybox/grep) 2>/dev/null;
+MAGISK_VERSION=$($magisk -c | grep -Eo '[1-9]{2}\.[0-9]+')
+case "$MAGISK_VERSION" in
+'15.'[1-9]*) # Version 15.1 - 15.9
+    HOST=/sbin/.core/img/.core/hosts
+	BBOX_PATH=/sbin/.core/img/busybox-ndk
+;;
+'16.'[1-9]*) # Version 16.1 - 16.9
+    HOST=/sbin/.core/img/.core/hosts
+	BBOX_PATH=/sbin/.core/img/busybox-ndk
+;;
+'17.'[1-3]*) # Version 17.1 - 17.3
+    HOST=/sbin/.core/img/.core/hosts
+	BBOX_PATH=/sbin/.core/img/busybox-ndk
+;;
+'17.'[4-9]*) # Version 17.4 - 17.9
+    HOST=/sbin/.magisk/img/hosts/system/etc/hosts
+	BBOX_PATH=/sbin/.magisk/img/busybox-ndk
+;;
+'18.'[0-9]*) # Version 18.x
+    HOST=/sbin/.magisk/img/hosts/system/etc/hosts
+	BBOX_PATH=/sbin/.magisk/img/busybox-ndk
+;;
+'19.'[0-9a-zA-Z]*) # All versions 19
+	HOST=/data/adb/modules/hosts/system/etc/hosts
+	BBOX_PATH=/data/adb/modules/busybox-ndk
+;;
+*)
+    echo "Unknown version: $1"
+;;
+esac
+
+
+if [ -n "$HOST" ] && [ -n "$BBOX_PATH" ]; then
 	SERVICESH=$MODPATH/service.sh
 	
 	ui_print    
@@ -472,4 +507,8 @@ if [ "$MAGISK_VER_CODE" -ge "19000" ]; then
 	ui_print
 
 	# ================================================================================================
+
+else
+ui_print "You Magisk version/setup isn't recognized/supported."
+ui_print "Module support 15.1 to 19's Magisk versions."
 fi
