@@ -87,8 +87,8 @@ ida() {
 	echo -e " " >> $instant_run
 
 	command=$(sh $instant_run)
-	wrong_result="Error: UNIQUE constraint failed: ownership.account,"
-	if [[ "$command" == "$wrong_result*" ]]; then
+	wrong_result=`echo "Error: UNIQUE constraint failed: ownership.account,"`
+	if [[ "$command" == "$wrong_result"* ]]; then
 		[ -e "$MAGMOD/silent" ] || echo -e "\nDatabase file corrupted\nDatabase file need to be created again\n"; sleep 2;
 		rm -f /data/data/com.android.vending/databases/library.db
 		am force-stop com.android.vending
@@ -269,7 +269,7 @@ t() {
 	crond_applet=$MAGIMG/busybox-ndk/system/*/crond
 		
 	[ -e "$MAGMOD/silent" ] || echo -e "\nCheck crond applet...\n"; sleep 2;
-	[ ! -e "crond_applet" ] | busybox_magisk_install
+	[ ! -e "$crond_applet" ] || busybox_magisk_install
 	[ -e "$MAGMOD/silent" ] || echo -e "\ncrond applet check done.\n"; sleep 2;
 		
 	[ -e "$MAGMOD/silent" ] || echo -e "\nSetup the detach shedule task.\n"; sleep 2;
@@ -284,7 +284,7 @@ s() {
 	if [ -e "$SILENT" ]; then
 		echo -e "\nSilent mode actualy: Enabled"; sleep 2;
 	else
-		echo -e "\nNew silent mode: Disabled"; sleep 2;
+		echo -e "\nSilent mode actualy: Disabled"; sleep 2;
 	fi
 		
 	if [ ! -e "$SILENT" ]; then
