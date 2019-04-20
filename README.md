@@ -25,6 +25,21 @@
 ## 2 ways to add apps in hiding feature:
 - <b>Detach.txt</b> file for <b>Google common's apps</b> and some others
 - <b>detach.custom</b> file for any other apps
+<br />
+
+------------------------------------------------------------------------------------
+
+#### Terminal features:
+- Instant detaching: instantly detaching your favorites app(s)
+- Add app(s): detach new app(s)
+- Remove app(s): attach again app(s) to Play Store updates
+- Kill: killing Play Store application
+- Clear Play Store datas: clear the Play Store's app datas
+- Task scheduler: automaticaly setup a task scheduler to automaticaly detach your app(s) from the Play Store's updates
+- Silent mode: enable or disable the silent mode, to have cleaner and less cluttered order results
+- Help: a help menu with all possible commands explained in more detail
+
+------------------------------------------------------------------------------------
 
 <br />
 <h3>For Google common's apps:</h3>
@@ -38,6 +53,8 @@
  - uncomment the app(s) you want to "hiding" from Play Store updates:<br />
 
 <img src="https://image.ibb.co/kCBd1V/Screenshot-20181025-211255.png" alt="Screenshot-20181025-211255.png" height="1200" width="600"><br />
+
+------------------------------------------------------------------------------------
 
 <br />
 <h3>For any over apps:</h3>
