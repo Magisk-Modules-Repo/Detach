@@ -16,6 +16,8 @@
 - All Android device from Lollipop to Pie
 - Substratum themes for Play Store
 
+<b><a href="https://t.me/Detach_gms_apps">Telegram group support</a></b>
+
 ------------------------------------------------------------------------------------
 
 <h5><b>Warning</b>: In a minority of cases, this MOD can purely break the Play Store app, so please backup your phone before setup this MOD on your phone. Thank you for your understanding.</h5>
