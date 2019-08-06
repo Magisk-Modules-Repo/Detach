@@ -3,7 +3,7 @@
 
 <p align="center">
  <a href="https://forum.xda-developers.com/android/software-hacking/mod-detach-market-links-theme-ready-apps-t3447494"><img src="https://img.shields.io/badge/XDA-Thread-yellow.svg?longCache=true&style=flat-square"></a><br />
- <a href=https://t.me/Detach_gms_apps"><img src="https://img.shields.io/badge/Telegram-Channel-blue.svg?longCache=true&style=flat-square"></a></p><br />
+ <a href=https://t.me/Detach_gms_apps><img src="https://img.shields.io/badge/Telegram-Channel-blue.svg?longCache=true&style=flat-square"></a></p><br />
 
 <h3 align=center>Introduction</h3>
 <h4 align=center>This Module is a portage of the original MOD created by hinxnz - <a href="https://forum.xda-developers.com/member.php?u=1909299">XDA thread/OP</a> to works as a Magisk module for Android, so all credits to him/her<h4>
@@ -15,8 +15,6 @@
 - Magisk v15.1 to v19
 - All Android device from Lollipop to Pie
 - Substratum themes for Play Store
-
-<b><a href="https://t.me/Detach_gms_apps">Telegram group support</a></b>
 
 ------------------------------------------------------------------------------------
 
