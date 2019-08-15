@@ -6,7 +6,7 @@
 menu() {
 # Initial stuff
 magisk=$(ls /data/adb/magisk/magisk || ls /sbin/magisk) 2>/dev/null;
-MAGISK_VERSION=$($magisk -c | grep -Eo '[1-9]{2}\.[0-9]+')
+MAGISK_VERSION=$($magisk -c | sed 's/-.*//')
 case "$MAGISK_VERSION" in
 '15.'[1-9]*) # Version 15.1 - 15.9
     MAGIMG=/sbin/.core/img
@@ -21,17 +21,32 @@ case "$MAGISK_VERSION" in
     MAGIMG=/sbin/.magisk/img
 ;;
 '18.'[0-9]*) # Version 18.x
-    MAGIMG=/sbin/.magisk/img
+    MAGIMG=/data/adb/modules
 ;;
 '19.'[0-9a-zA-Z]*) # All versions 19
 	MAGIMG=/data/adb/modules
 ;;
 *)
     echo "Unsupported Magisk version: $1"
+	exit 1
 ;;
 esac
 
-	
+# Busybox module check
+bb
+
+# Colors
+BL='\e[01;90m' > /dev/null 2>&1; # Black
+R='\e[01;91m' > /dev/null 2>&1; # Red
+G='\e[01;92m' > /dev/null 2>&1; # Green
+Y='\e[01;93m' > /dev/null 2>&1; # Yellow
+B='\e[01;94m' > /dev/null 2>&1; # Blue
+P='\e[01;95m' > /dev/null 2>&1; # Purple
+C='\e[01;96m' > /dev/null 2>&1; # Cyan
+W='\e[01;97m' > /dev/null 2>&1; # White
+LG='\e[01;37m' > /dev/null 2>&1; # Light Gray
+N='\e[0m' > /dev/null 2>&1; # Null
+
 MAGMOD=$MAGIMG/Detach
 SERVICESH=$MAGMOD/service.sh
 SILENT=$MAGMOD/silent
@@ -44,7 +59,16 @@ if ! ls /data/data 1>/dev/null 2>&1; then
     exit 1
 fi
 
-busybox_magisk_install
+bb
+
+# The selinux state need to be in 'Permissive' mode, especialy for 'am' shell command under Android 8 and higher because of it's selinux rules.
+# On Android 8 and higher if the selinux status is in 'Enforcing' mode, the selinux rules don't allow/prevent apps from killing/stopping other process through am command.
+# It's why we set temporary set the selinux state in permissive mode if it's state is in default, and restore it in it initial state at the end.
+SELINUX_STATUT=$(getenforce)
+if [ "$SELINUX_STATUT" = "Enforcing" ]; then
+	setenforce 0
+fi
+
 
 case $1 in
 	-id|--instant-detach) ida;;
@@ -53,16 +77,11 @@ case $1 in
 	-k|--kill) k;;
 	-c|--clear-PS-data) c;;
 	-t|--task-scheduler) t;;
-	-s|--silent-mode-toogler) s;;
+	-s|--silent-mode) s;;
+	-b|--busybox) bb;;
 	-h|--help) h;;
-	-e|--exit) exxit;;
-	*)
-	if [ -e "$target/Busybox_install_success"]; then
-		exit
-	else
-		echo -e "\nNo option in your input !\n\n\nIf you need help, please type:\n su -c Detach -h\nor:\n su -c Detach --help\n(they are same)\n\n"
-		exit
-	fi
+	*)	echo -e $P"\n\n => Fast terminal commands available:\n(in su mode)\n\n	su -c Detach -id (or --instant-detach): To detach instantly your app(s) from the Play Store.\n\nMore commands ? Ok just look below !"$N; sleep 3;
+	echo -e $G"\n\n\n=> Other commands options:\n\n	su -c Detach -a (or --add-app) For adding an app to your detach list\n	su -c Detach -r (or --rem-app) For removing an app to your detach list\n		su -c Detach -k (or --kill) Just force-stop the Play Store app\n	su -c Detach -c (or --clear-PS-data) Deleting the Play Store's datas\n	su -c Detach -t (or --task-scheduler) Perform a task schedule to run the detach works periodicly\n	su -c Detach -s (or --silent-mode) Put On/Off the silent mode\n		su -c Detach -b (or --busybox)Optionnal option, to install the Magisk Busybox module\n		su -c Detach -h (or --help) All previously said, but with some more details..\n\n\n"; echo -e $R"No option in your input !\nIf you need help, please type:\n su -c Detach -h\nor:\n su -c Detach --help\n(They are same)\n\n"$N
 	;;
 esac
 }
@@ -70,33 +89,110 @@ esac
 
 # Instant Detach
 ida() {
-	[ -e "$MAGMOD/silent" ] || echo -e "\nWork in progress...\n"; sleep 2;
+Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
+echo -e "\n==Detach $Detach_version\n\nDetach work in progress..."; sleep 2;
 
-	instant_run=$MAGMOD/instant_run.sh
-	test -e $instant_run || touch $instant_run
-	chmod 0777 $instant_run
+instant_run=$MAGMOD/instant_run.sh
+instant_run_two=$MAGMOD/instant_run_two.sh
+test -e "$instant_run" || touch "$instant_run"
+chmod 0777 "$instant_run"
+PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
 
-	cat /dev/null > $instant_run
+# Multiple Play Store accounts compatibility
+ps_accounts=$("$MAGMOD/sqlite" $PS_DATA_PATH "SELECT account FROM ownership" | sort -u | wc -l)
+ps_accounts_final=$((ps_accounts+1))
 
-	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=/sbin/.core/img/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> $instant_run
+cat /dev/null > "$instant_run"
+echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGIMG}/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$instant_run"
+sed -n -e '31,$p' "$SERVICESH" | grep sqlite  >> "$instant_run"
 
-	grep sqlite $SERVICESH >> $instant_run
-	sed -i -e 's/.\t\/sqlite/.\/sqlite/' $instant_run 2>/dev/null
-	sed -i -e 's/..\/sqlite/.\/sqlite/' $instant_run 2>/dev/null
+echo -e "\n" >> "$instant_run"
 
-	echo -e " " >> $instant_run
+test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
+chmod 0777 "$MAGMOD/first_detach_result.txt"
+sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
 
-	command=$(sh $instant_run)
-	wrong_result=`echo "Error: UNIQUE constraint failed: ownership.account,"`
-	if [[ "$command" == "$wrong_result"* ]]; then
-		[ -e "$MAGMOD/silent" ] || echo -e "\nDatabase file corrupted\nDatabase file need to be created again\n"; sleep 2;
-		rm -f /data/data/com.android.vending/databases/library.db
-		am force-stop com.android.vending
-		[ -e "$MAGMOD/silent" ] || echo -e "\nDone\nYou need to wait some minutes and check again your Play Store"
-	else		
-		[ -e "$MAGMOD/silent" ] || echo -e "\nDone\n"
-		[ -e "$MAGMOD/silent" ] || echo -e "\nInstant file ready to be executed, path of the file:\n $instant_run\n\n\nOr you can use the dedicated scheduler feature by urins "
+if [ "$ps_accounts" -gt "1" ]; then
+	test -e "$instant_run_two" || touch "$instant_run_two"
+	chmod 0777 "$instant_run_two"
+	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGIMG}/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" > "$instant_run_two"
+	am force-stop com.android.vending
+	for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" > "$instant_run_two"; done
+	sed -i -e 's/.\t\/sqlite/.\/sqlite/' "$instant_run_two"
+	sed -i -e 's/..\/sqlite/.\/sqlite/' "$instant_run_two"
+	sed -i -e "s/SQLITE=\$MODD.\/sqlite//" "$instant_run_two"
+	echo -e '\n' >> "$instant_run_two"
+	
+	sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
+fi
+
+	
+wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
+if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
+	[ -e "$MAGMOD/silent" ] || echo -e "\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"; sleep 2;
+	
+	ACTAPPS=$MAGMOD/actapps.txt
+	ACTAPPSBCK=$MAGMOD/actapps.bak
+	FINAL=$MAGMOD/final.sh
+	
+	for o in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do touch "$o" && cat /dev/null > "$o" && chmod 0644 "$o"; done
+	
+	PLAY_DB_DIR=/data/data/com.android.vending/databases
+	
+	grep sqlite "$SERVICESH" > "$ACTAPPS"
+	sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
+	sed -i -e '1d' "$ACTAPPS"
+	sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
+	
+	
+	cp -f "$ACTAPPS" "$ACTAPPSBCK"
+	
+	var_ACTAPPS=$(awk '{ print }' "$ACTAPPSBCK")
+	
+	am force-stop com.android.vending
+	
+	FIRST_PCK_NAME=$(head -n 1 "$ACTAPPS")
+	PRESENT_DIR=$(pwd)
+	SQL_ENTRY_TEST=$(cd $MAGMOD && ./sqlite $PS_DATA_PATH "SELECT * FROM ownership WHERE doc_id = '${FIRST_PCK_NAME}' AND library_id='3'" | wc -l)
+	cd "$PRESENT_DIR"
+	ZERO=0
+	
+	chmod +x "$FINAL"
+	
+	if [ "$SQL_ENTRY_TEST" -eq 1 ]; then
+		echo -e "\ncd $MAGMOD\n\n" >> "$FINAL"
+		printf '%s\n' "$var_ACTAPPS" | while IFS= read -r line
+			do echo -e "./sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$line' AND library_id = '3'\";\n" >> "$FINAL"
+		done
+		chmod +x "$FINAL"
+		sh "$FINAL"
+	else
+		echo -e "\ncd $MAGMOD\n\n" >> "$FINAL"
+		while [ "$ZERO" -le "$SQL_ENTRY_TEST" ]; do
+			printf '%s\n' "$var_ACTAPPS" | while IFS= read -r line
+				do echo -e "./sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$line' AND library_id = '3'\";\n" >> "$FINAL"
+			done
+			SQL_ENTRY_TEST=$(($SQL_ENTRY_TEST - 1))
+		done
+		sh "$FINAL"
 	fi
+	
+	for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/first_detach_result.txt"; do rm -f "$f"; done
+	echo -e "\nDatabase file fixed.\n\nDone\n"; sleep 2;
+else		
+	echo -e "\nDone\n"
+	[ -e "$MAGMOD/silent" ] || echo -e "Instant file ready to be executed, path of the file:\n $instant_run\n"
+fi
+
+am force-stop com.android.vending
+
+# Selinux statut restoring
+case "$SELINUX_STATUT" in
+	Enforcing) setenforce 1
+	;;
+	Permissive) setenforce 0
+	;;
+esac
 }
 
 
@@ -104,13 +200,16 @@ ida() {
 add() {
 	FINALCUST=$MAGMOD/detach.custom.final
 	BAK=$MAGMOD/detach.custom.bak
+	instant_run=$MAGMOD/instant_run.sh
 	PACKAGES=$(ls /sdcard/detach.custom || ls /sdcard/detach.custom.txt || ls /sdcard/DETACH.CUSTOM || ls /sdcard/DETACH.CUSTOM.TXT || ls /sdcard/Detach.custom.txt || ls /sdcard/Detach.Custom.txt) 2>/dev/null;
+	TXT_CHECK=$MAGMOD/detach.txt
+	TXT_CHECK_BCK=$MAGMOD/detach.bak
 	
-	for i in "$BAK" "$FINALCUST"; do touch "$i" && chmod -R 0644 "$i"; done
+	for i in "$BAK" "$FINALCUST" "$instant_run"; do touch "$i" && chmod -R 0644 "$i"; done
 	
 	while true
 	do
-		echo -e "\n\nPlease write the application package name\nyou want to detach from automatic PS update\n\n"
+		echo -e "\n\nPlease write the application package name\nyou want to detach from automatic PS update\n\nPackage name: "
 		read TOADD
 		break
 	done
@@ -122,29 +221,66 @@ add() {
 		case $CONFIRMADD in
 			Y|y|Yes|yes|YES)
 						if grep -q "$TOADD" "$SERVICESH"; then
-							echo -e "\n! The name that you have entered already exist in your list\n=> Type su -c Detach -a or su and Detach -a again.\n\n"; sleep 3;
+							echo -e "\n! The name that you have entered already exist in your list\n=> Type su -c Detach -a or su and Detach -a again to add another package name in your list.\n\n"; sleep 3;
 							exit 0
 						else
 							echo -e "\n$TOADD is going to be added in your list.."; sleep 2;
 							
-							LINE2CUT=$(grep -n "# Custom Packages" $SERVICESH | awk '{ print $1 }' | sed 's/:#//')
+							LINE2CUT=$(grep -n "# Custom Packages" "$SERVICESH" | awk '{ print $1 }' | sed 's/:#//')
 							sed -i -e "$LINE2CUT,\$d" "$SERVICESH"
-							echo -e "# Custom Packages\n" >> $FINALCUST
+							echo -e "# Custom Packages\n" >> "$FINALCUST"
 							
-							cp -f $PACKAGES $BAK
-							chmod 0644 $BAK
-							ALLCUS=$(awk '{ print }' $BAK)
+							cp -f "$PACKAGES" "$BAK"
+							chmod 0644 "$BAK"
+							ALLCUS=$(awk '{ print }' "$BAK")
 							
-							for i in $(cat $BAK); do echo -e "	./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$i'\";" >> $FINALCUST; done
+							for i in $(cat "$BAK"); do echo -e "	./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$i'\";" >> "$FINALCUST"; done
 							
-							echo -e "./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$TOADD'\";" >> $FINALCUST
+							echo -e "  	./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$TOADD'\";" >> "$FINALCUST"
 							
-							cat $FINALCUST >> $SERVICESH
-							echo "" >> $SERVICESH
-							echo "# Exit" >> $SERVICESH
-							echo "	exit; fi" >> $SERVICESH
-							echo "done &)" >> $SERVICESH
+							cat /dev/null > "$instant_run"
+							echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGIMG}/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$instant_run"
+							cat "$FINALCUST" | tee -a "$SERVICESH" "$instant_run" 1>/dev/null
+							echo "" | tee -a "$SERVICESH" "$instant_run" 1>/dev/null
+							echo "# Exit" | tee -a "$SERVICESH" "$instant_run" 1>/dev/null
+							echo "	exit" | tee -a "$SERVICESH" "$instant_run" 1>/dev/null
+							echo "done &)" | tee -a "$SERVICESH" "$instant_run" 1>/dev/null
 							echo -e "\n\n=> $TOADD has been added to the detach list.\n\n"
+							echo -e "\nDatabase file fixed.\n\nDetach your app(s)..."; sleep 2
+							sh "$instant_run" 2>&1 >"$MAGMOD/first_detach_result.txt"
+							wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
+							
+							if grep "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
+								[ -e "$MAGMOD/silent" ] || echo -e "\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"; sleep 2
+		
+								ACTAPPS=$MAGMOD/actapps.txt
+								ACTAPPSBCK=$MAGMOD/actapps.bak
+								FINAL=$MAGMOD/final.sh
+		
+								for o in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do touch "$o" && cat /dev/null > "$o" && chmod 0644 "$o"; done
+		
+								grep sqlite "$SERVICESH" > "$ACTAPPS"
+								sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
+								sed -i -e '1d' "$ACTAPPS"
+								sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
+		
+								PLAY_DB_DIR=/data/data/com.android.vending/databases
+								cp -f "$ACTAPPS" "$ACTAPPSBCK"
+								echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGIMG}/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$FINAL"
+								
+								var_ACTAPPS=$(awk '{ print }' "$ACTAPPSBCK")
+								for i in $(cat "$ACTAPPSBCK"); do echo -e "$MAGMOD/sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$i' AND library_id = '3'\";" >> "$FINAL"; done
+		
+								sh "$FINAL"
+		
+								am force-stop com.android.vending
+								for f in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do rm -f "$f"; done
+								
+								echo -e "\nDetaching task finished\n"
+							else		
+								echo -e "\nDone\n"
+								[ -e "$MAGMOD/silent" ] || echo -e "\nInstant file ready to be executed, path of the file:\n $instant_run\n\n\n"
+							fi
 							break
 						fi
 		;;
@@ -158,90 +294,109 @@ add() {
 	done
 	
 	for j in "$BAK" "$FINALCUST"; do rm -f "$j"; done
+	
+	# Selinux statut restoring
+case "$SELINUX_STATUT" in
+	Enforcing) setenforce 1
+	;;
+	Permissive) setenforce 0
+	;;
+esac
 }
 
 
 # Removing app
 rem() {
-	SERVICESH=$MAGMOD/service.sh
-	ACTAPPS=$MAGMOD/actapps.txt
-	ACTAPPSRD=$MAGMOD/actapps_ready.txt
-	SERVICESHFN=$MAGMOD/final_service.sh
-	[ -e "$ACTAPPSRD" ] | rm -f "$ACTAPPSRD"
-	touch "$ACTAPPSRD"
-	chmod 0644 "$ACTAPPSRD"
-	[ -e "$ACTAPPS" ] | rm -f "$ACTAPPS"
-	touch "$ACTAPPS"
-	chmod 0644 "$ACTAPPS"
+SERVICESH=$MAGMOD/service.sh
+ACTAPPS=$MAGMOD/actapps.txt
+ACTAPPSRD=$MAGMOD/actapps_ready.txt
+SERVICESHFN=$MAGMOD/final_service.sh
+[ -e "$ACTAPPSRD" ] | rm -f "$ACTAPPSRD"
+touch "$ACTAPPSRD"
+chmod 0644 "$ACTAPPSRD"
+[ -e "$ACTAPPS" ] | rm -f "$ACTAPPS"
+touch "$ACTAPPS"
+chmod 0644 "$ACTAPPS"
+
+grep sqlite "$SERVICESH" >> "$ACTAPPS"
+sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
+sed -i -e '1d' "$ACTAPPS"
+
+sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
+
+printf '%s\n' "$ACTAPPS" | while IFS= read -r line
+	do echo -e "\n\nPresent apps\n$divider\n"
+	cat "$line"
+	echo -e "\n$divider\n"
+done
+
+while true
+do
+	echo -e "\nWich app do you want to remove ?\n(Type a part or the name or the complete name)"
+	read TODEL
 	
-	grep sqlite "$SERVICESH" >> "$ACTAPPS"
-	sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" "$ACTAPPS"
-	sed -i -e "s/'\";//" "$ACTAPPS"
-	sed -e 's/[[:blank:]]*//' < "$ACTAPPS" > "$ACTAPPSRD"
+	echo -e "\n\nSearch for the name...\n\n"; sleep 2;
 	
-	printf '%s\n' "$ACTAPPSRD" | while IFS= read -r line
-		do echo -e "\n\nPresent apps\n$divider\n"
-		cat "$line"
-		echo -e "\n$divider\n"
-	done
+	APPLINE2REM=$(grep -no "$TODEL" "$SERVICESH" | sed "s/:$TODEL//") 2>/dev/null;
+	APPNAME2REM=$(grep "$TODEL" "$SERVICESH" | awk '{print $NF}' | sed  -e "s/'//" -e "s/'\";//") 2>/dev/null;
 	
-	while true
-	do
-		echo -e "\nWich app do you want to remove ?\n(Type a part or the name or the complete name)"
-		read TODEL
-	
-		APPTOREM=`grep -no "$TODEL" "$SERVICESH" 2>/dev/null | sed "s/:$TODEL//"`
-		APPTOREMPREVIOUS=$((APPTOREM-1))
-		APPNAME=`cat "$ACTAPPSRD" | grep "$TODEL" 2>/dev/null`
-		
-		if expr "$APPNAME" : '.*[^[:alnum:]]' >/dev/null;
-		then
-			echo "\n\n$APPNAME is ready to be deleted.\n\n"; sleep 2;
-			break
-		else
-			echo "\n\n ! No match found, please expend or refine your pattern.\n"; sleep 3;
-			exit 1
-		fi
-	done
-	
-	
-	echo -e "\n=> Do you confirm ?\n(yes or no)\n"
-	while true
-	do
+	if [ -z "$APPLINE2REM" ]; then
+		echo -e "\n\n ! No matchs found, please refine your pattern.\n\n"; sleep 3; exit 1;
+	fi
+	if [ "$APPLINE2REM" -gt 1 ]; then
+		echo -e "\n\n ! Too much matchs found, please refine your pattern.\n\n"; sleep 3; exit 1;
+	fi
+	APPTOREMPREVIOUS=$((APPLINE2REM-1))
+
+	echo "\n\n$APPNAME2REM is ready to be deleted.\n\n"; sleep 2;
+done
+
+
+echo -e "\n=> Do you confirm ?\n(yes or no)\n"
+while true
+do
 	read CONFTODEL
-		
+	
 	case $CONFTODEL in
 		Y|y|Yes|yes|YES)
-					LINUP2DEL=`sed "1,/$TODEL/d" "$SERVICESH"`
-					if grep -qs '# Custom Packages' "$LINUP2DEL"; then
-						LETTER="d"
-						FINAL=$APPTOREM$LETTER
-						FINAL2=$APPTOREMPREVIOUS$LETTER
-						
-						sed -i -e "$FINAL2;$FINAL" "$SERVICESH"
-						echo -e "\n$APPNAME has been deleted\n"; sleep 2;
-						break
-					else
-						LETTER="d"
-						FINAL=$APPTOREM$LETTER
-						sed -i -e "$FINAL" "$SERVICESH"
-						echo -e "\n$APPNAME has been deleted\n"; sleep 2;
-						break
-					fi
-	;;
+				LINUP2DEL=$(sed "1,/$TODEL/d" "$SERVICESH")
+				if grep -qs '# Custom Packages' "$LINUP2DEL"; then
+					LETTER="d"
+					FINAL=$APPLINE2REM$LETTER
+					FINAL2=$APPTOREMPREVIOUS$LETTER
+					sed -i -e "$FINAL" "$SERVICESH"
+					sed -i -e "$FINAL2" "$SERVICESH"
+					echo -e "\n$APPNAME2REM has been deleted\n"; sleep 2;
+					break
+				else
+					LETTER="d"
+					FINAL=$APPLINE2REM$LETTER
+					sed -i -e "$FINAL" "$SERVICESH"
+					echo -e "\n$APPNAME has been deleted\n"; sleep 2;
+					break
+				fi
+		;;
 		N|n|No|no|NO) 
-					echo "\nCanceled\n"
-					exit 0
-	;;
+				echo "\nCanceled\n"
+				exit 0
+		;;
 		*) echo "\n\nINVALID ENTRY, try again.\n"
-	;;
+		;;
 	esac
-	done
+done
 	
-	rm -f "$ACTAPPS"
-	rm -f "$ACTAPPSRD"
-	
-	echo -e "\nExit...\n"; sleep 2;
+for k in "$ACTAPPS" "$ACTAPPSRD"; do rm -f "$k"; done
+
+echo -e "\nExit...\n"; sleep 2;
+
+# Selinux statut restoring
+case "$SELINUX_STATUT" in
+	Enforcing) setenforce 1
+	;;
+	Permissive) setenforce 0
+	;;
+esac
+
 	exit
 }
 
@@ -252,6 +407,14 @@ k() {
 	sleep 2
 	am force-stop com.android.vending
 	[ -e "$MAGMOD/silent" ] || echo -e "\nPS app has been force-stop.\n"
+	
+	# Selinux statut restoring
+case "$SELINUX_STATUT" in
+	Enforcing) setenforce 1
+	;;
+	Permissive) setenforce 0
+	;;
+esac
 }
 
 
@@ -260,24 +423,171 @@ c() {
 	[ -e "$MAGMOD/silent" ] || echo -e "\nWorks in progress...\n"; sleep 2;
 	pm clear com.android.vending
 	[ -e "$MAGMOD/silent" ] || echo -e "\nDone\n"
+	
+	# Selinux statut restoring
+case "$SELINUX_STATUT" in
+	Enforcing) setenforce 1
+	;;
+	Permissive) setenforce 0
+	;;
+esac
 }
 
 
 # Task scheduler
 t() {
-	postfsdata=$MAGMOD/post-fs-data.sh
-	crond_applet=$MAGIMG/busybox-ndk/system/*/crond
-		
-	[ -e "$MAGMOD/silent" ] || echo -e "\nCheck crond applet...\n"; sleep 2;
-	[ ! -e "$crond_applet" ] || busybox_magisk_install
-	[ -e "$MAGMOD/silent" ] || echo -e "\ncrond applet check done.\n"; sleep 2;
-		
-	[ -e "$MAGMOD/silent" ] || echo -e "\nSetup the detach shedule task.\n"; sleep 2;
-	. .$postfsdata && crond_service
-	[ -e "$MAGMOD/silent" ] || echo -e "\nCrond task created and scheduled at every phone startup to be run every 2 hours.\n"; sleep 2;
-	echo -e "\nDone\nExit...\n"
-}
+		cat <<SCHEDULE
 	
+	
+	
+			=== Detach scheduling ===
+	
+=> Here, many way to scheduling the detach works are possible.
+=> Just choose one of them.
+	
+	1 - Tasker (application)
+	2 - Crond (Linux command)
+	3 - DJS (Magisk module by VR25@xda-devlopers.com
+	4 - Droid Automation (Market application)
+	5 - Your own app/tool/MOD
+	
+	
+	
+Now just make your choice..
+(1, 2, 3, 4 or 5)
+
+(Just for information, "TAB" is Tabulation: Control-v, then Tab.)
+Or just this symbol:
+  /==========================\
+  |     |/_______________    |
+  |     |\                   |
+  |      _______________\|   |
+  |                     /|   |
+  \==========================/
+
+SCHEDULE
+
+read SCHEDU
+
+case $SCHEDU in
+	1|Tasker|tasker|TASKER)
+		echo -e "\n\nYour choice: Tasker\n"
+		if [ -d /data/data/net.dinglisch.android.taskerm ] || [ -d /system/app/net.dinglisch.android.taskerm] || [ -d /system/priv-app/net.dinglisch.android.taskerm]; then 2>/dev/null
+			echo -e "\nNext step require Busybox Magisk Module and active connexion (WIFI/Datas).\n"
+			bb
+			wget --no-check-certificate -T 3 -q -O "$MAGMOD/Auto_Detach_Tasker.xml" https://github.com/xerta555/Detach-Files/raw/master/Auto_Detach_Tasker.tsk.xml 2>/dev/null
+			if [ ! -e "$MAGMOD/Auto_Detach_Tasker.xml" ]; then
+				echo -e "Unable to download the necessary file!\nPlease check your connexion."
+				exit 0
+			fi
+			echo -e "\nHow often do you want the Detach script to be executed?\n(NUMBER for Day TAB NUMBER for Hours NUMBER for Minutes TAB NUMBER for Seconds, for no time (0 minutes for exemple) use 0).\n\n"
+			read TASKER_period
+			TASKER_period=$(echo "$TASKER_period" | sed 's/ /\t/' 2>/dev/null)
+			
+			TASKER_seconds=$(echo "$TASKER_period" | awk '{ print $4 }')
+			TASKER_minutes=$(echo "$TASKER_period" | awk '{ print $3 }')
+			TASKER_hours=$(echo "$TASKER_period" | awk '{ print $2 }')
+			TASKER_days=$(echo "$TASKER_period" | awk '{ print $1 }')
+			sed -i "59s/days/${TASKER_days}/" $MAGMOD/Auto_Detach_Tasker.xml
+			sed -i "58s/hours/${TASKER_hours}/" $MAGMOD/Auto_Detach_Tasker.xml
+			sed -i "57s/seconds/${TASKER_minutes}/" $MAGMOD/Auto_Detach_Tasker.xml
+			sed -i "56s/minutes/${TASKER_seconds}/" $MAGMOD/Auto_Detach_Tasker.xml
+			cp -f $MAGMOD/Auto_Detach_Tasker.xml /sdcard
+			echo -e "\nXML File for your Tasker app is ready:\n/sdcard/Auto_Detach_Tasker.xml\n\nJust import this file in your Tasker.\n\n"
+		else
+			echo "\n! => Apparently you don't have install Tasker application\n! => Do you want to install it?"; sleep 2;
+			read TASKER_INSTALL
+			case $TASKER_INSTALL in
+				Y|y|Yes|yes|YES)
+					am start -a android.intent.action.VIEW -d 'https://play.google.com/store/apps/details?id=net.dinglisch.android.taskerm&hl=en'
+				;;
+				N|n|No|no|NO)
+					exit 0
+				;;
+			esac 
+		fi
+	;;
+	2|cron|crond|CRON|COND|Cron|Crond)
+		echo -e "\n\nYour choice: Crond\n"
+		if [ -e /system/bin/crond ] || [ -e /system/sbin/crond ] || [ -e /system/xbin/crond ] || [ -e /sbin/crond ]; then 2>/dev/null
+			echo -e "\nChoose your time execution:\n(format: Minute (0-59) TAB Hour (0-23) TAB Day of mount (1-31) TAB Month (1-12) TAB Day of Week (0-6) (For Sunday=0 or 7)\nTAB is tabulation.\n\nCommand exemple for every 2 hours:\ncrond 0 */2 * * * /path/to/script_file.sh\n\n"
+			read crond_entry
+			Minute=$(awk "{ print $1 $crond_entry}")
+			Hour=$(awk "{ print $2 $crond_entry}")
+			Day_of_mounth=$(awk "{ print $3 $crond_entry}")
+			Month=$(awk "{ print $4 $crond_entry}")
+			Day_of_week=$(awk "{ print $5 $crond_entry}")
+			
+			for c in "$Minute" "$Hour" "$Day_of_mounth" "$Month" "$Day_of_week"
+				do if ! grep -qs '[0-9]/|*' $(echo "$c"); then
+					echo -e "\n! Invalid input for \$c.\nPlease try again.\n\n"
+					fi
+				done
+			crond 
+		fi
+	;;
+	3|DJS|Djs|djs)
+		echo -e "\n\nYour choice: DJS Module\n"
+		if [ -e "$MAGIMG/djs/module.prop" ] && [ ! -e "$MAGIMG/djs/update" ]; then
+			echo -e "\nEvery how many hours do you want to run the Detach Magic?\n(A number)\n"
+			read djs_hours
+			echo -e "\nSetup the schedule..\n"
+			djsc -a "boot while true; do su -c Detach -id > /dev/null 2>&1; sleep "$djs_hours"h; done"; djsd
+			echo -e "\nDone\n"
+		else
+			echo -e "You have to:\n - Install djs module with Magisk Manager\n - Reboot your device\n - And run again su -c detach -t in your terminal emulator"
+		fi
+	;;
+	4|"Droid Automation"|"DROID AUTO"|"DROID AUTOMATION"|"droid automation"|Droid|DROID|droid)
+		echo -e "\n\nYour choice: Droid Automation\n\n- Check your app setup...\n"
+		
+		if [ ! -d /data/data/com.wakdev.droidautomation.free ] || [ ! -d /system/app/com.wakdev.droidautomation.free ] || [ ! -d /system/priv-app/com.wakdev.droidautomation.free ]; then
+			echo "\n! => Apparently you don't have install Droid Automation\n! => Do you want to install it?"; sleep 2;
+			read TASKER_INSTALL
+			case $TASKER_INSTALL in
+				Y|y|Yes|yes|YES)
+					am start -a android.intent.action.VIEW -d 'https://play.google.com/store/apps/details?id=com.wakdev.droidautomation.free&hl=en'
+				;;
+				N|n|No|no|NO)
+					exit 0
+			esac
+		fi
+		
+		echo -e "\nEvery how many hours minutes seconds do you want to run the Detach Magic?\n(Separate hours minutes and seconds with spaces)\n\n"
+		read DA
+		DA1=$(echo "$DA" | awk '{print $1}')
+		DA2=$(echo "$DA" | awk '{print $2}')
+		DA3=$(echo "$DA" | awk '{print $3}')
+		NOW_YEAR=$(date +"%Y")
+		NOW_MONTH=$(date +"%m")
+		NOW_DAY=$(date +"%d")
+		
+		NOW_HOURS=$(date +"%H")
+		NOW_MINUTES=$(date +"%M")
+		NOW_SECONDS=$(date +"%S")
+		
+		echo '{"automation.profile.name":"Detach","automation.profile.enabled":true,"automation.profile.triggers.length":1,"automation.profile.triggers.data":[{"triggers.fields":{"field3":"$DA3","field1":"$DA1","field2":"$DA2"},"triggers.config":{"itemUpdate":"true","itemTriggerExtra":null,"requestType":"38","itemTrigger":"18367","itemHash":"833cf518-c11b-411c-a412-98900f11705a","itemDescription":"Déclencher toutes les : 05h.06m.07s."}}],"automation.profile.tasks.length":1,"automation.profile.tasks.data":[{"task.fields":{"field1":"su -c detach -id"},"task.config":{"itemUpdate":"false","requestType":"6666","itemTask":"su -c detach -id","itemDescription":"su -c detach -id","itemHash":"be7b37d9-1573-45f5-b20c-42df0a90be6a"}}]}' >> "/data/data/com.wakdev.droidautomation.free/files/profiles/automation/$NOW_YEAR$NOW_MONTH$NOW_DAY$NOW_HOURS$NOW_MINUTES$NOW_SECONDS"
+		echo -e "\nYou could be asked for su access by Magisk or SuperSU (or any other su app manager)\n\nDone\n"
+	;;
+	5|"My tool"|Mine)
+		if [ ! -e "$MAGMOD/instant_run.sh" ]; then
+			echo -e "\nWarning: Before scheduling, you must have run the command at least once time:\nsu -c detach -id\n\nThen you can use the schedule feature of your choice freely.\n\nRemember that to update the list of your detached applications, you must flash the module again via TWRP or Magisk Manager (prefer Magisk Manager preferably, but TWRP remains compatible with the module in the absolute).\n\n"; sleep 2;
+		else
+			echo -e "\nCommand (best method - require root access):\n su -c Detach -id\n\n"; sleep 1;
+			echo -e "\n\nPath of the script file: $MAGMOD/instant_run.sh\n"; sleep 2;
+		fi
+	;;
+esac
+		
+	# Selinux statut restoring
+case "$SELINUX_STATUT" in
+	Enforcing) setenforce 1
+	;;
+	Permissive) setenforce 0
+	;;
+esac
+}
+
 
 # Silent mode
 s() {
@@ -295,6 +605,14 @@ s() {
 		rm -f "$SILENT"
 		echo -e "..\nNew mode: Disabled\n"; sleep 2;
 	fi
+	
+	# Selinux statut restoring
+case "$SELINUX_STATUT" in
+	Enforcing) setenforce 1
+	;;
+	Permissive) setenforce 0
+	;;
+esac
 }
 
 
@@ -384,147 +702,170 @@ Module-Repo link for Magisk: https://github.com/Magisk-Modules-Repo/Detach
 	
 	
 HELP
+
+# Selinux statut restoring
+case "$SELINUX_STATUT" in
+	Enforcing) setenforce 1
+	;;
+	Permissive) setenforce 0
+	;;
+esac
 }
 
-exxit() {
-	exit
-}
 
+# Busybox installer
+bb() {
 
-# Busybox auto-installer
-busybox_magisk_install() {
-	BBPATH=$MAGIMG/busybox-ndk
-	BBMAG=$MAGIMG/busybox-ndk/system/xbin/busybox
+BBPATH=$MAGIMG/busybox-ndk
+busybox_magisk=$(ls "$BBPATH/system/bin/busybox" || ls "$BBPATH/system/xbin/busybox") 2>/dev/null
 
-if [[ -d "$BBPATH" && -e "$BBPATH/module.prop" ]]; then
-    echo "Busybox is installed"
-else
-	echo - Processing Busybox setup
-	echo -e "\n\n=====================================\n\nBusybox Installer Script\nPorted to works with Detach module by Rom\nAll credits to osm0sis @ xda-developers\n\n=====================================\n\n"
-	mkdir -p /dev/tmp/Busybox-dl
-	test -d /dev/tmp/Busybox-dl && INSTALLER=/dev/tmp/Busybox-dl || echo -e "\n\nProblem:=> Unable to setup temp directory to install the Busybox Magisk module !!\nFix: Install it directly by Magisk Manager, in 'Downloads' tab.\n\n" | exit
-	echo -e "\n- Downloading...\n"; sleep 2;
-	wget --no-check-certificate -q -O $INSTALLER/busybox-ndk.zip https://codeload.github.com/Magisk-Modules-Repo/busybox-ndk/zip/master 2>/dev/null
-	
-	ZIPFILE=$INSTALLER/busybox-ndk.zip
-	
-	test -e /data/adb/magisk && adb=adb
-	
-	dev=/dev
-	devtmp=/dev/tmp
-	test -e /data/adb/magisk/busybox && magiskbb=/data/adb/magisk/busybox
-	test "$magiskbb" && export PATH="$magiskbb:$PATH"
-	
-	zipextract=busybox-ndk
-	
-	test -f /system/build.prop && root=/system
-	
-	choice=$(basename "$ZIPFILE")
-	
-	action=installation
-	nolinks=1
-	
-	echo -e "\n- Extracting files...\n"; sleep 2;
-	
-	mkdir -p $dev/tmp/$zipextract
-	
-	unzip -oj "$ZIPFILE" busybox-ndk-master/module.prop 'busybox-ndk-master/busybox*' -d $dev/tmp/$zipextract
-	chmod 0777 $dev/tmp/$zipextract/*
-	
-	echo -e "\nInstalling...\n"; sleep 2;
-	
-	abi=`getprop ro.product.cpu.abi`;
-	case $abi in
-		arm*|x86*|mips*) ;;
-		*) abi=`getprop ro.product.cpu.abi`;;
-	esac
-	case $abi in
-		arm*|x86*|mips*) ;;
-		*) abi=`getprop ro.product.cpu.abi $root/default.prop`;;
-	esac
-	case $abi in
-		arm64*) arch=arm64;;
-		arm*) arch=arm;;
-		x86_64*) arch=x86_64;;
-		x86*) arch=x86;;
-		mips64*) arch=mips64;;
-		mips*) arch=mips;;
-		*) echo "Unknown architecture: $abi"; abort; exit 2;;
-	esac
-	
-	echo -e "\nUsing architecture: $arch\n"; sleep 2;
-	
-	modname=busybox-ndk
-	
-	magisk=$BBPATH/system
-	
-	target=$magisk/xbin
+if [ -z "$busybox_magisk" ]; then
+	echo -e "\n\nDo you want to check if you have the Busybox Magisk module on your device ?\n(Type yes or no)\n\n"
+	read bbox
+	case $bbox in
+		Y|y|Yes|yes|YES)
+				
+		mkdir -p /dev/tmp/Busybox-dl
+		test -d /dev/tmp/Busybox-dl && INSTALLER=/dev/tmp/Busybox-dl || echo -e "\n\nProblem:=> Unable to check your Busybox setup!!\nFix: Install it directly by Magisk Manager, in 'Downloads' tab.\n\n" | exit
+			echo -e "\nBusybox is already installed.\n"
+			echo -e "\n"
+			echo -e "! \nNo Busybox Magisk module detected.\nOr you don't have the last version\n\nProcessing Busybox setup...\n"
+			echo -e "\n=====================================\n\nBusybox Installer Script\nPorted to works with Detach module by Rom\nAll credits to osm0sis@xda-developers\n\n=====================================\n\n"
 		
-	echo -e "\nUsing path: $target\n"; sleep 2;
+			echo -e "\n- Downloading...\n"; sleep 2;
+			wget --no-check-certificate -q -O "$INSTALLER/busybox-ndk.zip" https://codeload.github.com/Magisk-Modules-Repo/busybox-ndk/zip/master 2>/dev/null
+			
+			if [ ! -e "$INSTALLER/busybox-ndk.zip" ]; then
+				echo -e "\nUnable to download pre-requested Busybox module.\nDownload it yourself by Magisk Manager (in Download section).\n\n"
+				am start -n com.topjohnwu.magisk/a.c
+				exit 1
+			else
+			
+				ZIPFILE=$INSTALLER/busybox-ndk.zip
 	
-	mkdir -p $target
+				test -e /data/adb/magisk && adb=adb
 	
-	TMPBUSYBOXDIR=$dev/tmp/busybox-ndk
+				dev=/dev
+				devtmp=/dev/tmp
+				test -e /data/adb/magisk/busybox && magiskbb=/data/adb/magisk/busybox
+				test "$magiskbb" && export PATH="$magiskbb:$PATH"
 	
-	cp -f $TMPBUSYBOXDIR/busybox-$arch $target/busybox
-	chown 0:0 "$target/busybox"
-	chmod 755 "$target/busybox"
-	cp -f $TMPBUSYBOXDIR/module.prop $BBPATH
-	touch $BBPATH/auto_mount
-	touch $BBPATH/update
+				zipextract=busybox-ndk
 	
-	echo -e "\nCleaning...\n"; sleep 2;
+				test -f /system/build.prop && root=/system
 	
-	cleanup="$mnt$magisk/xbin $target"
+				choice=$(basename "$ZIPFILE")
 	
-	for dir in $cleanup; do
-		cd $dir
-		for i in $(ls -al `find -type l` | $target/busybox awk '{ print $(NF-2) ":" $NF }'); do
-			case $(echo $i | $target/busybox cut -d: -f2) in
-				*busybox) list="$list $dir/$(echo $i | $target/busybox cut -d: -f1)";;
-			esac
-		done
-	done
+				action=installation
+				nolinks=1
 	
-	echo "Creating symlinks..."; sleep 2;
-	sysbin="$(ls $root/bin)"
-	existbin="$(ls $imgmnt/busybox-ndk/system/bin 2>/dev/null)"
-	for applet in `$target/busybox --list`; do
-		case $target in
-			*/bin)
-				if [ "$(echo "$sysbin" | $target/busybox grep "^$applet$")" ]; then
-					if [ "$(echo "$existbin" | $target/busybox grep "^$applet$")" ]; then
-						$target/busybox ln -sf busybox $applet
-					fi
+				echo -e "\n- Extracting files...\n"; sleep 2;
+	
+				mkdir -p "$dev/tmp/$zipextract"
+	
+				unzip -oj "$ZIPFILE" busybox-ndk-master/module.prop 'busybox-ndk-master/busybox*' -d "$devtmp/$zipextract"
+				chmod 0777 "$dev/tmp/$zipextract/*"
+	
+				echo -e "\nInstalling...\n"; sleep 2;
+	
+				abi=$(getprop ro.product.cpu.abi);
+				case $abi in
+					arm*|x86*|mips*) ;;
+					*) abi=$(getprop ro.product.cpu.abi);;
+				esac
+		
+				case $abi in
+					arm*|x86*|mips*) ;;
+					*) abi=$(getprop ro.product.cpu.abi $root/default.prop);;
+				esac
+				case $abi in
+					arm64*) arch=arm64;;
+					arm*) arch=arm;;
+					x86_64*) arch=x86_64;;
+					x86*) arch=x86;;
+					mips64*) arch=mips64;;
+					mips*) arch=mips;;
+					*) echo "Unknown architecture: $abi"; abort; exit 2;;
+				esac
+	
+				echo -e "\nUsing architecture: $arch\n"; sleep 2;
+	
+				modname=busybox-ndk
+	
+				magisk=$BBPATH/system
+	
+				target=$magisk/xbin
+		
+				echo -e "\nUsing path: $target\n"; sleep 2;
+	
+				mkdir -p "$target"
+	
+				TMPBUSYBOXDIR=$dev/tmp/busybox-ndk
+	
+				cp -f "$TMPBUSYBOXDIR/busybox-$arch" "$target/busybox"
+				chown 0:0 "$target/busybox"
+				chmod 755 "$target/busybox"
+				cp -f "$TMPBUSYBOXDIR/module.prop" "$BBPATH"
+				touch "$BBPATH/auto_mount"
+				touch "$BBPATH/update"
+	
+				echo -e "\nCleaning...\n"; sleep 2;
+	
+				cleanup="$mnt$magisk/xbin $target"
+	
+				for dir in $cleanup; do
+					cd "$dir"
+					for i in $(ls -al `find -type l` | $target/busybox awk '{ print $(NF-2) ":" $NF }'); do
+						case $(echo $i | $target/busybox cut -d: -f2) in
+							*busybox) list="$list $dir/$(echo $i | $target/busybox cut -d: -f1)";;
+						esac
+					done
+				done
+	
+				echo "Creating symlinks..."; sleep 2;
+				sysbin="$(ls $root/bin)"
+				existbin="$(ls $imgmnt/busybox-ndk/system/bin 2>/dev/null)"
+				for applet in `$target/busybox --list`; do
+					case $target in
+						*/bin)
+							if [ "$(echo "$sysbin" | $target/busybox grep "^$applet$")" ]; then
+								if [ "$(echo "$existbin" | $target/busybox grep "^$applet$")" ]; then
+									"$target/busybox" ln -sf busybox "$applet"
+								fi
+							else
+								"$target/busybox" ln -sf busybox "$applet"
+							fi
+						;;
+						*) "$target/busybox" ln -sf busybox "$applet"
+						;;
+					esac
+				done
+		
+				test "$magisk" && chcon -hR 'u:object_r:system_file:s0' "$target"
+				rm -rf /dev/tmp
+				
+				echo -e "\nCheck module setup\n"; sleep 2;
+				
+				if [ -a "$target/awk" ]; then
+					echo -e "\n- Done!\n- Reboot your device to apply changes\n(Think to save your present works (docs, music players,webrbowsers,...)\n\n"; sleep 2;
+					exit
 				else
-					$target/busybox ln -sf busybox $applet
+					echo -e "\n!! Busybox setup problem detected.\n=> Please install the module directly with Magisk Manager\n ('Downloads' tab).\n"
+				exit 1
 				fi
-				;;
-				*) $target/busybox ln -sf busybox $applet;;
-		esac
-	done
-		
-	test "$magisk" && chcon -hR 'u:object_r:system_file:s0' "$target"
-	rm -rf /dev/tmp
-	if [ -a "$target/awk" ]; then
-		touch $BBPATH/Busybox_install_success
-		echo -e "\n- Done!\n- Reboot your device to apply changes\n(Think to save your present works (docs, music players,...)\n\n"; sleep 2;
-		exit
-	else
-		echo -e "\n!! Busybox install problem detected.\n=> Please install the module directly with Magisk Manager\n ('Downloads' tab).\n"
-		exit 1
-	fi
+			fi
+		break
+	;;
+	N|n|No|no|NO)
+		echo -e "\nBusybox is installed\nNext...\n"; sleep 1;
+	;;
+	*)
+		echo "\n\nINVALID ENTRY, try again if you want\nExit now...\n"; sleep 3;
+		break
+	;;
+	esac
 fi
 }
-
-alias wget=$(ls /sbin/.core/busybox/wget || ls /sbin/.magisk/busybox/wget) 2>/dev/null;
-alias grep=$(ls /sbin/.core/busybox/grep || ls /sbin/.magisk/busybox/grep) 2>/dev/null;
-alias sed=$(ls /sbin/.magisk/busybox/sed || ls /sbin/.magisk/busybox/sed) 2>/dev/null;
-alias chmod=$(ls /sbin/.magisk/busybox/chmod || ls /sbin/.magisk/busybox/chmod) 2>/dev/null;
-alias test=$(ls /sbin/.magisk/busybox/test || ls /sbin/.magisk/busybox/test) 2>/dev/null;
-alias comm=$(ls /sbin/.magisk/busybox/comm || ls /sbin/.magisk/busybox/comm) 2>/dev/null;
-alias awk=$(ls /sbin/.magisk/busybox/awk || ls /sbin/.magisk/busybox/awk) 2>/dev/null;
-
 
 divider="-------------------------------------------------"
 separator="-----------------------------------------------------------------------------------------------------------"
