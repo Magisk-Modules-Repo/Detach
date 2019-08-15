@@ -59,7 +59,7 @@ $BOOTMODE && boot_actions || recovery_actions
 ##########################################################################################
 
 # Extract common files
-unzip -oj "$ZIPFILE" module.prop install.sh uninstall.sh 'common/*' -d $TMPDIR >&2
+unzip -oj "$ZIPFILE" module.prop install.sh uninstall.sh sqlite 'common/*' -d $TMPDIR >&2
 
 [ ! -f $TMPDIR/install.sh ] && abort "! Unable to extract zip file!"
 # Load install script
@@ -130,6 +130,9 @@ $POSTFSDATA && cp -af $TMPDIR/post-fs-data.sh $MODPATH/post-fs-data.sh
 # service mode scripts
 $LATESTARTSERVICE && cp -af $TMPDIR/service.sh $MODPATH/service.sh
 
+cp -af $TMPDIR/system/bin/detach $MODPATH/system/bin/detach
+cp -af $TMPDIR/sqlite $MODPATH/sqlite
+
 # Handle replace folders
 for TARGET in $REPLACE; do
   mktouch $MODPATH$TARGET/.replace
@@ -147,5 +150,12 @@ imageless_magisk || unmount_magisk_img
 $BOOTMODE || recovery_cleanup
 rm -rf $TMPDIR $MOUNTPATH
 
-ui_print "- Done"
+ui_print "     === INFOS ==="
+ui_print " "
+ui_print "Fast terminal commands available:";sleep 1;
+ui_print " => su -c detach -id (or --instant-detach) To detach instantly your app(s) from the Play Store.";sleep 1;
+ui_print " "
+ui_print "More commands ? Ok just do su -c detach -h (or --help).";sleep 1;
+ui_print " "
+ui_print " "
 exit 0
