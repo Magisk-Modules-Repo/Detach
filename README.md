@@ -6,14 +6,14 @@
  <a href=https://t.me/Detach_gms_apps><img src="https://img.shields.io/badge/Telegram-Channel-blue.svg?longCache=true&style=flat-square"></a></p><br />
 
 <h3 align=center>Introduction</h3>
-<h4 align=center><b>INFO:</b>This Module is a port of the original MOD created by hinxnz - <a href="https://forum.xda-developers.com/member.php?u=1909299">XDA thread/OP</a> to work as a Magisk module for Android, so all credits to him. :+1:<h4>
+<h4 align=center><b>INFO:</b>This Module is a port of the original MOD created by hinxnz - <a href="https://forum.xda-developers.com/member.php?u=1909299">XDA thread/OP</a> to work as a Magisk module for Android, so all credits to him.<h4>
 <br />
  
-<h4>:information_source: Short explanation:</h4>
+<h4>Short explanation:</h4>
 <h5>With this MOD, you can "detach" app(s) from your Google Play Store automatic update process, it completely hides the update in the "My games and applications" section. So you won't see your detached apps from your Play Store pending updates!<br /></h5>
 <br />
 
-<b>:scroll: Setup steps:</b>
+<b>Setup steps:</b>
 - If you just want to detach common app(s) like Hangouts, YouTube, Facebook, etc, just download the <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/detach.txt">detach.txt</a> file and save it in your `/sdcard/` folder.
 - If you want to detach some specific apps, so download the <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/detach.custom.txt"> detach.custom.txt</a> file and save it in your `/sdcard/` folder.
 - Make sure that the file(s) detach.txt and/or detach.custom.txt are in your `/sdcard/` folder.
@@ -21,7 +21,7 @@
 - Done!
 <br />
 
-<b>:heavy_check_mark: Compatibility:</b>
+<b>Compatibility:</b>
 - Magisk (v15 to lastest)
 - All Android devices from Lollipop to Pie
 - Magisk Manager & TWRP
@@ -31,11 +31,11 @@
 
 ------------------------------------------------------------------------------------
 
-<h5>:warning: <b>Warning</b>: In a very few cases, this mod can purely break the Play Store app, so please backup your phone before flashing this mod. Thanks for your understanding.</h5>
+<h5><b>Warning</b>: In a very few cases, this mod can purely break the Play Store app, so please backup your phone before flashing this mod. Thanks for your understanding.</h5>
 
 ------------------------------------------------------------------------------------
 
-#### :bulb: Terminal features:
+#### Terminal features:
 - Instant detaching: instantly detaching your favorites app(s)
 - Add app(s): detach new app(s)
 - Remove app(s): attach again app(s) to Play Store updates
@@ -77,7 +77,7 @@
 <br />
 <br />
 
-### :grey_question: <b>Common Question and Answers:</b>
+### <b>Common Question and Answers:</b>
 
 #### Q: A problem ?
 
@@ -133,4 +133,4 @@ A: You can schedule the `su -c detach -id` command
 
 ------------------------------------------------------------------------------------
 
-Here we go ? :relaxed:
+Here we go ?
