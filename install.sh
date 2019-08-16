@@ -137,7 +137,7 @@ on_install() {
   ui_print "- Extracting module files"
   unzip -o "$ZIPFILE" 'system/*' -d $MODPATH
   unzip -o "$ZIPFILE" sqlite -d $TMPDIR
-  ln -sf Detach detach
+  ln -sf $MODPATH/system/bin/Detach detach
 }
 
 # Only some special files require specific permissions
@@ -761,7 +761,6 @@ for w in "$FINALCUST" "$SQSHBAK" "$SQSH" "$BAK" "$instant_run"; do rm -f "$w"; d
 
 	# ================================================================================================
 
-cp -af $TMPDIR/sqlite $MODPATH/sqlite
 
 ui_print "Finish the script file..";sleep 2;
 ui_print " "
