@@ -59,7 +59,7 @@ $BOOTMODE && boot_actions || recovery_actions
 ##########################################################################################
 
 # Extract common files
-unzip -oj "$ZIPFILE" module.prop install.sh uninstall.sh sqlite 'common/*' -d $TMPDIR >&2
+unzip -oj "$ZIPFILE" module.prop install.sh sqlite 'common/*' -d $TMPDIR
 
 [ ! -f $TMPDIR/install.sh ] && abort "! Unable to extract zip file!"
 # Load install script
