@@ -135,8 +135,8 @@ on_install() {
   # The following is the default implementation: extract $ZIPFILE/system to $MODPATH
   # Extend/change the logic to whatever you want
   ui_print "- Extracting module files"
-  unzip -o "$ZIPFILE" 'system/*' -d $MODPATH >&2
-  unzip -o "$ZIPFILE" sqlite -d $MODPATH
+  unzip -o "$ZIPFILE" 'system/*' -d $MODPATH
+  ln -sf Detach detach
 }
 
 # Only some special files require specific permissions
@@ -146,8 +146,11 @@ on_install() {
 set_permissions() {
   # The following is the default rule, DO NOT remove
   set_perm_recursive $MODPATH 0 0 0755 0644
+  set_perm_recursive $TMPDIR 0 0 0755 0644
   set_perm $MODPATH/system/bin/Detach 0 0 0777
-  set_perm  $MODPATH/sqlite  0  2000  0755 0644
+  set_perm $TMPDIR/sqlite  0  2000  0755 0644
+  set_perm $MODPATH/sqlite  0  2000  0755 0644
+  
 
   # Here are some examples:
   # set_perm_recursive  $MODPATH/system/lib       0     0       0755      0644
@@ -182,8 +185,7 @@ export awk=$($mag_busybox awk > /dev/null 2>&1)
 MAGISK_VERSION=$(/data/adb/magisk/magisk -c | /data/adb/magisk/busybox grep -Eo '[1-9]{2}\.[0-9]+')
 case "$MAGISK_VER" in
 '15.'[1-9]*) # Version 15.1 - 15.9
-    HOST=/sbin/.core/img/.core/hosts
-	BBOX_PATH=/sbin/.core/img/busybox-ndk
+    BBOX_PATH=/sbin/.core/img/busybox-ndk
 ;;
 '16.'[1-9]*) # Version 16.1 - 16.9
     BBOX_PATH=/sbin/.core/img/busybox-ndk
@@ -205,11 +207,13 @@ case "$MAGISK_VER" in
 ;;
 esac
 
+
+
 Detach_version=$($mag_busybox grep 'version=.*' "$TMPDIR/module.prop" | sed 's/version=//')
 ui_print " "
 ui_print "  === Detach $Detach_version ===  "
 ui_print " "
-ui_print "- Checking pre-request"
+ui_print "- Checking pre-requests"
 ui_print " "
 sleep 2;
 
@@ -235,8 +239,6 @@ if [ -e "$SERVICESH" ]; then
 	fi
 fi
 	
-[ -d "$TMPDIR/system/bin/" ] || mkdir -p "$TMPDIR/system/bin/"
-ln -sf Detach "$TMPDIR/system/bin/detach"
 
 sleep 1;
 ui_print "- Prepare done"
@@ -647,11 +649,12 @@ ui_print "Detach work in progress"
 ui_print "..."; sleep 1;
 ui_print " "
 
-chmod +x "$MODPATH/sqlite"
-instant_run=$MODPATH/instant_run.sh
-instant_run_two=$MODPATH/instant_run_two.sh
+
+chmod +x $TMPDIR/sqlite
+instant_run=$TMPDIR/instant_run.sh
+instant_run_two=$TMPDIR/instant_run_two.sh
 test -e "$instant_run" || touch "$instant_run"
-chmod 0777 "$instant_run"
+chmod 0777 "$instant_run" && chmod +x "$instant_run"
 PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
 	
 # Multiple Play Store accounts compatibility
@@ -670,7 +673,7 @@ sh "$instant_run"
 	
 if [ "$ps_accounts" -gt "1" ]; then
 	test -e "$instant_run_two" || touch "$instant_run_two"
-	chmod 0777 "$instant_run_two"
+	chmod 0777 "$instant_run_two" && chmod +x "$instant_run_two"
 	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGIMG}/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" > "$instant_run_two"
 	am force-stop com.android.vending
 	for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" > "$instant_run_two"; done
@@ -758,6 +761,7 @@ for w in "$FINALCUST" "$SQSHBAK" "$SQSH" "$BAK" "$instant_run"; do rm -f "$w"; d
 
 ui_print "Finish the script file..";sleep 2;
 ui_print " "
+
 
 echo "" >> "$MAGSH"
 echo "# Exit" >> "$MAGSH"
