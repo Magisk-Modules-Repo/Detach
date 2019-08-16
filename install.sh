@@ -135,7 +135,8 @@ on_install() {
   # The following is the default implementation: extract $ZIPFILE/system to $MODPATH
   # Extend/change the logic to whatever you want
   ui_print "- Extracting module files"
-  unzip -o "$ZIPFILE" 'system/*' -d $MODPATH
+  unzip -o "$ZIPFILE" sqlite 'system/*' -d $MODPATH
+  cp -af $MODPATH/sqlite $TMPDIR/sqlite
   ln -sf Detach detach
 }
 
