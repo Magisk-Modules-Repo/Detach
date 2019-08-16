@@ -135,8 +135,8 @@ on_install() {
   # The following is the default implementation: extract $ZIPFILE/system to $MODPATH
   # Extend/change the logic to whatever you want
   ui_print "- Extracting module files"
-  unzip -o "$ZIPFILE" sqlite 'system/*' -d $MODPATH
-  cp -af $MODPATH/sqlite $TMPDIR/sqlite
+  unzip -o "$ZIPFILE" 'system/*' -d $TMPDIR
+  unzip -o "$ZIPFILE" sqlite -d $TMPDIR
   ln -sf Detach detach
 }
 
@@ -759,6 +759,8 @@ fi
 for w in "$FINALCUST" "$SQSHBAK" "$SQSH" "$BAK" "$instant_run"; do rm -f "$w"; done 2>/dev/null
 
 	# ================================================================================================
+
+cp -af $TMPDIR/sqlite $MODPATH/sqlite
 
 ui_print "Finish the script file..";sleep 2;
 ui_print " "
