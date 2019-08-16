@@ -647,9 +647,9 @@ ui_print "Detach work in progress"
 ui_print "..."; sleep 1;
 ui_print " "
 
-chmod +x "$TMPDIR/sqlite"
-instant_run=$TMPDIR/instant_run.sh
-instant_run_two=$TMPDIR/instant_run_two.sh
+chmod +x "$MODPATH/sqlite"
+instant_run=$MODPATH/instant_run.sh
+instant_run_two=$MODPATH/instant_run_two.sh
 test -e "$instant_run" || touch "$instant_run"
 chmod 0777 "$instant_run"
 PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
