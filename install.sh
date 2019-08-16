@@ -647,7 +647,7 @@ ui_print "Detach work in progress"
 ui_print "..."; sleep 1;
 ui_print " "
 
-chmod +x "$TMPDIR/Detach/sqlite"
+chmod +x "$TMPDIR/sqlite"
 instant_run=$TMPDIR/instant_run.sh
 instant_run_two=$TMPDIR/instant_run_two.sh
 test -e "$instant_run" || touch "$instant_run"
