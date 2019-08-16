@@ -136,8 +136,8 @@ on_install() {
   # Extend/change the logic to whatever you want
   ui_print "- Extracting module files"
   unzip -o "$ZIPFILE" 'system/*' -d $MODPATH
-  unzip -o "$ZIPFILE" sqlite -d $TMPDIR
-  ln -sf $MODPATH/system/bin/Detach detach
+  unzip -o "$ZIPFILE" sqlite -d $MODPATH
+  ln -sf $MODPATH/system/bin/Detach $MODPATH/system/bin/detach
 }
 
 # Only some special files require specific permissions
@@ -231,6 +231,7 @@ ui_print "- Prepare stuff"
 ui_print " "
 
 unzip -o "$ZIPFILE" sqlite -d $TMPDIR
+chmod 0777 "$TMPDIR/sqlite" && chmod +x "$TMPDIR/sqlite"
 
 SERVICESH=$MODPATH/service.sh
 if [ -e "$SERVICESH" ]; then
@@ -240,7 +241,10 @@ if [ -e "$SERVICESH" ]; then
 		sed -i -e '30,$d' "$SERVICESH"
 	fi
 fi
-	
+
+if [ ! -e "$TMPDIR/sqlite" ]; then
+	exit 1
+fi
 
 sleep 1;
 ui_print "- Prepare done"
