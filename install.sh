@@ -135,7 +135,7 @@ on_install() {
   # The following is the default implementation: extract $ZIPFILE/system to $MODPATH
   # Extend/change the logic to whatever you want
   ui_print "- Extracting module files"
-  unzip -o "$ZIPFILE" 'system/*' -d $TMPDIR
+  unzip -o "$ZIPFILE" 'system/*' -d $MODPATH
   unzip -o "$ZIPFILE" sqlite -d $TMPDIR
   ln -sf Detach detach
 }
@@ -230,6 +230,7 @@ sleep 2;
 ui_print "- Prepare stuff"
 ui_print " "
 
+unzip -o "$ZIPFILE" sqlite -d $TMPDIR
 
 SERVICESH=$MODPATH/service.sh
 if [ -e "$SERVICESH" ]; then
