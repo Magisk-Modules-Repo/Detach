@@ -137,7 +137,9 @@ on_install() {
   ui_print "- Extracting module files"
   unzip -o "$ZIPFILE" 'system/*' -d $MODPATH
   unzip -o "$ZIPFILE" sqlite -d $MODPATH
-  ln -sf $MODPATH/system/bin/Detach /system/bin/detach
+  
+  [ -d "$MODPATH/system/bin/" ] || mkdir -p "$MODPATH/system/bin/"
+  ln -sf Detach "$MODPATH/system/bin/detach"
 }
 
 # Only some special files require specific permissions
