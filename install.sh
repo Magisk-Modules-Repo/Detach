@@ -230,7 +230,7 @@ sleep 2;
 ui_print "- Prepare stuff"
 ui_print " "
 
-unzip -o "$ZIPFILE" sqlite -d $TMPDIR
+unzip -o "$ZIPFILE" sqlite -d $TMPDIR 1>/dev/null
 chmod 0777 "$TMPDIR/sqlite" && chmod +x "$TMPDIR/sqlite"
 
 SERVICESH=$MODPATH/service.sh
