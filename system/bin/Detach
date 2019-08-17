@@ -32,9 +32,6 @@ case "$MAGISK_VERSION" in
 ;;
 esac
 
-# Busybox module check
-bb
-
 # Colors
 BL='\e[01;90m' > /dev/null 2>&1; # Black
 R='\e[01;91m' > /dev/null 2>&1; # Red
@@ -717,7 +714,7 @@ esac
 bb() {
 
 BBPATH=$MAGIMG/busybox-ndk
-busybox_magisk=$(ls "$BBPATH/system/bin/busybox" || ls "$BBPATH/system/xbin/busybox") 2>/dev/null
+busybox_magisk=$(ls "$BBPATH/system/bin/busybox" || ls "$BBPATH/system/xbin/busybox" || ls /system/xbin/busybox || ls /system/bin/busybox || ls /system/sbin/busybox || ls /sbin/busybox) 2>/dev/null
 
 if [ -z "$busybox_magisk" ]; then
 	echo -e "\n\nDo you want to check if you have the Busybox Magisk module on your device ?\n(Type yes or no)\n\n"
