@@ -14,7 +14,7 @@
 <br />
 
 <b>Setup steps:</b>
-- If you just want to detach common app(s) like Hangouts, YouTube, Facebook, etc, just download the <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/detach.txt">detach.txt</a> file and save it in your `/sdcard/` folder.
+- If you just want to detach common app(s) like Hangouts, YouTube, Facebook, etc, just download the <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/Detach.txt">detach.txt</a> file and save it in your `/sdcard/` folder.
 - If you want to detach some specific apps, so download the <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/detach.custom.txt"> detach.custom.txt</a> file and save it in your `/sdcard/` folder.
 - Make sure that the file(s) detach.txt and/or detach.custom.txt are in your `/sdcard/` folder.
 - Flash the module ZIP (Magisk Manager and TWRP are supported)
@@ -50,7 +50,7 @@
 
 <br />
 <h3><u>For common apps:<u></h3>
-- You have to download the following file: <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/detach.txt" ">detach.txt</a> 
+- You have to download the following file: <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/Detach.txt" ">detach.txt</a> 
  
 - Save it in your phone's internal storage root:<br />
 (So: `/sdcard/detach.txt` or `/storage/emulated/0/detach.txt`)
