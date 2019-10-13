@@ -205,6 +205,9 @@ case "$MAGISK_VER" in
 '19.'[0-9a-zA-Z]*) # All versions 19
 	BBOX_PATH=/data/adb/modules/busybox-ndk
 ;;
+'20.'[0-9a-zA-Z]*) # Version 20.x
+	MODS_DIR=/data/adb/modules
+;;
 *)
     ui_print "Unknown version: $1"
 ;;
