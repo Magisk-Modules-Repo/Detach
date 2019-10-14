@@ -27,7 +27,7 @@ case "$MAGISK_VERSION" in
 	MAGIMG=/data/adb/modules
 ;;
 '20.'[0-9a-zA-Z]*) # Version 20.x
-	MODS_DIR=/data/adb/modules
+	MAGIMG=/data/adb/modules
 ;;
 *)
     echo "Unsupported Magisk version: $1"
