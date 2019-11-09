@@ -7,7 +7,7 @@ menu() {
 # Initial stuff
 magisk=$(ls /data/adb/magisk/magisk || ls /sbin/magisk) 2>/dev/null;
 MAGISK_VERSION=$($magisk -c | sed 's/-.*//')
-case "$MAGISK_VERSION" in
+case $MAGISK_VERSION in
 '15.'[1-9]*) # Version 15.1 - 15.9
     MAGIMG=/sbin/.core/img
 ;;
@@ -27,7 +27,7 @@ case "$MAGISK_VERSION" in
 	MAGIMG=/data/adb/modules
 ;;
 '20.'[0-9a-zA-Z]*) # Version 20.x
-	MODS_DIR=/data/adb/modules
+	MAGIMG=/data/adb/modules
 ;;
 *)
     echo "Unsupported Magisk version: $1"
@@ -50,20 +50,20 @@ N='\e[0m' > /dev/null 2>&1; # Null
 MAGMOD=$MAGIMG/Detach
 SERVICESH=$MAGMOD/service.sh
 SILENT=$MAGMOD/silent
-PACKAGES=$(ls /sdcard/detach.custom || ls /sdcard/detach.custom.txt || ls /sdcard/DETACH.CUSTOM || ls /sdcard/DETACH.CUSTOM.TXT || ls /sdcard/Detach.custom.txt || ls /sdcard/Detach.Custom.txt) 2>/dev/null;
-BAK=$MODPATH/detach.custom.bak
+
+CONF=$(ls /sdcard/detach.txt || ls /sdcard/Detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 
 # root check
 if ! ls /data/data 1>/dev/null 2>&1; then
-    echo -e "(!) You must run me as root\n(type su<enter>\nDetach\nor\nsu -c Detach -<option>)\n"
+    echo -e $R"(!) You must run me as root\n(type su<enter>\nDetach\nor\nsu -c Detach -<option>)\n"$N
     exit 1
 fi
 
 bb
 
-# The selinux state need to be in 'Permissive' mode, especialy for 'am' shell command under Android 8 and higher because of it's selinux rules.
+# The selinux state need to be in 'Permissive' mode, because this script use the 'am' shell command under Android 8 and higher because of it's selinux rules.
 # On Android 8 and higher if the selinux status is in 'Enforcing' mode, the selinux rules don't allow/prevent apps from killing/stopping other process through am command.
-# It's why we set temporary set the selinux state in permissive mode if it's state is in default, and restore it in it initial state at the end.
+# It's why we set temporary set the selinux state in permissive mode if it's state is in enforcing mode, and restore it in it initial state at the end.
 SELINUX_STATUT=$(getenforce)
 if [ "$SELINUX_STATUT" = "Enforcing" ]; then
 	setenforce 0
@@ -72,6 +72,7 @@ fi
 
 case $1 in
 	-id|--instant-detach) ida;;
+	-l|--list-app) list;;
 	-a|--add-app) add;;
 	-r|--rem-app) rem;;
 	-k|--kill) k;;
@@ -80,8 +81,7 @@ case $1 in
 	-s|--silent-mode) s;;
 	-b|--busybox) bb;;
 	-h|--help) h;;
-	*)	echo -e $P"\n\n => Fast terminal commands available:\n(in su mode)\n\n	su -c Detach -id (or --instant-detach): To detach instantly your app(s) from the Play Store.\n\nMore commands ? Ok just look below !"$N; sleep 3;
-	echo -e $G"\n\n\n=> Other commands options:\n\n	su -c Detach -a (or --add-app) For adding an app to your detach list\n	su -c Detach -r (or --rem-app) For removing an app to your detach list\n		su -c Detach -k (or --kill) Just force-stop the Play Store app\n	su -c Detach -c (or --clear-PS-data) Deleting the Play Store's datas\n	su -c Detach -t (or --task-scheduler) Perform a task schedule to run the detach works periodicly\n	su -c Detach -s (or --silent-mode) Put On/Off the silent mode\n		su -c Detach -b (or --busybox)Optionnal option, to install the Magisk Busybox module\n		su -c Detach -h (or --help) All previously said, but with some more details..\n\n\n"; echo -e $R"No option in your input !\nIf you need help, please type:\n su -c Detach -h\nor:\n su -c Detach --help\n(They are same)\n\n"$N
+	*)	echo -e $R"\n\nNo option in your input !\nIf you need help, please type:\n su -c Detach -h\nor:\n su -c Detach --help\n(They are same)\n\n"$N
 	;;
 esac
 }
@@ -90,7 +90,7 @@ esac
 # Instant Detach
 ida() {
 Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
-echo -e "\n==Detach $Detach_version\n\nDetach work in progress..."; sleep 2;
+echo -e $C"\nDetach $Detach_version\n\nDetach work in progress..."$N; sleep 2;
 
 instant_run=$MAGMOD/instant_run.sh
 instant_run_two=$MAGMOD/instant_run_two.sh
@@ -103,24 +103,25 @@ ps_accounts=$("$MAGMOD/sqlite" $PS_DATA_PATH "SELECT account FROM ownership" | s
 ps_accounts_final=$((ps_accounts+1))
 
 cat /dev/null > "$instant_run"
-echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGIMG}/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$instant_run"
-sed -n -e '31,$p' "$SERVICESH" | grep sqlite  >> "$instant_run"
+echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGIMG/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$instant_run"
+
+egrep "^[[:space:]]*./sqlite" "$SERVICESH" >> "$instant_run"
 
 echo -e "\n" >> "$instant_run"
 
 test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
-chmod 0777 "$MAGMOD/first_detach_result.txt"
+chmod 0644 "$MAGMOD/first_detach_result.txt"
 sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
 
 if [ "$ps_accounts" -gt "1" ]; then
 	test -e "$instant_run_two" || touch "$instant_run_two"
-	chmod 0777 "$instant_run_two"
-	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGIMG}/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" > "$instant_run_two"
+	chmod 0644 "$instant_run_two"
+	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGIMG/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" > "$instant_run_two"
 	am force-stop com.android.vending
 	for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" > "$instant_run_two"; done
 	sed -i -e 's/.\t\/sqlite/.\/sqlite/' "$instant_run_two"
 	sed -i -e 's/..\/sqlite/.\/sqlite/' "$instant_run_two"
-	sed -i -e "s/SQLITE=\$MODD.\/sqlite//" "$instant_run_two"
+	sed -i -e "s/SQLITE=\$MODDIR.\/sqlite//" "$instant_run_two"
 	echo -e '\n' >> "$instant_run_two"
 	
 	sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
@@ -129,7 +130,7 @@ fi
 	
 wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
 if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
-	[ -e "$MAGMOD/silent" ] || echo -e "\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"; sleep 2;
+	[ -e "$MAGMOD/silent" ] || echo -e $C"\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"$N; sleep 2;
 	
 	ACTAPPS=$MAGMOD/actapps.txt
 	ACTAPPSBCK=$MAGMOD/actapps.bak
@@ -139,14 +140,12 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 	
 	PLAY_DB_DIR=/data/data/com.android.vending/databases
 	
-	grep sqlite "$SERVICESH" > "$ACTAPPS"
+	awk '$1 == "./sqlite" { print; x++ } END { print x, "total matches" }' "$SERVICESH" | sed '$ d' | tr -d '\t ' >> "$ACTAPPS"
 	sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
 	sed -i -e '1d' "$ACTAPPS"
 	sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
-	
-	
+		
 	cp -f "$ACTAPPS" "$ACTAPPSBCK"
-	
 	var_ACTAPPS=$(awk '{ print }' "$ACTAPPSBCK")
 	
 	am force-stop com.android.vending
@@ -178,13 +177,14 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 	fi
 	
 	for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/first_detach_result.txt"; do rm -f "$f"; done
-	echo -e "\nDatabase file fixed.\n\nDone\n"; sleep 2;
+	echo -e $C"\nDatabase file fixed.\n\nDone\n"$N; sleep 2;
 else		
-	echo -e "\nDone\n"
-	[ -e "$MAGMOD/silent" ] || echo -e "Instant file ready to be executed, path of the file:\n $instant_run\n"
+	echo -e $G"\nDone\n"$N
 fi
 
 am force-stop com.android.vending
+
+for r in "$instant_run_two" "$ACTAPPS" "$ACTAPPSBCK" "$FINAL" "$MAGMOD/first_detach_result.txt"; do rm -f "$r"; done
 
 # Selinux statut restoring
 case "$SELINUX_STATUT" in
@@ -196,105 +196,198 @@ esac
 }
 
 
+# List hided apps
+list() {
+apps_list=$(tail -n +32 "$SERVICESH" | grep -e "# [A-Z]" | sed 's/# Custom Packages//' | sed 's/# Multiple.*//' | sed '$ d' | sed 's/[[:blank:]]*//' | grep "# [A-Za-z0-9]" | sed 's/# //')
+
+echo -e "\n\nHidden app(s):\n$divider\n"
+printf '%s\n' "$apps_list" | while IFS= read -r line
+	do echo "- $line"
+done
+echo -e "\n$divider\n"
+sleep 1;
+}
+
+
 # Adding app
 add() {
-	FINALCUST=$MAGMOD/detach.custom.final
-	BAK=$MAGMOD/detach.custom.bak
+SERVICESH=$MAGMOD/service.sh
+CONF=$(ls /sdcard/Detach.txt || ls /storage/emulated/0/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
+ACT_BASIC_APPS=$MAGMOD/act_basic_apps.txt
+ACT_CUST_APPS=$MAGMOD/act_cust_apps.txt
+COMPATIBILITY=$MAGMOD/compatibility.txt
+Instant_sqlite=$MAGMOD/instant_sqlite.txt
+DL_CHECK=$MAGMOD/DL_check.txt
+
+for i in "$ACT_BASIC_APPS" "$ACT_CUST_APPS" "$Instant_sqlite"; do  [ ! -e "$i" ] && touch "$i" && chmod -R 0777 "$i"; done
+
+echo -e $C"\n\nPlease write the application package name\nyou want to detach from automatic PS update\n\nPackage name: "$N
+read TOADD
+echo -e $C"\n\n '$TOADD' - Do you confirm ?"$N; sleep 2;
+read CONFIRMADD
+if [ $(cat "$SERVICESH" | grep "$TOADD" | sed 's/  #//') ]; then
+	echo -e $R"\n! The name that you have entered already exist in your list\n=> Type su -c Detach -a or su and Detach -a again to add another package name in your list.\n\n"$N; sleep 3;
+	exit
+fi
+
+case $CONFIRMADD in
+	Y|y|Yes|yes|YES)
+	echo -e $G"\nCheck if $TOADD exist on the Play Store..."$N; sleep 2;
+	# Check if user input exist on Play Store \(WIFI and/or LTE are require\)
+	touch "$DL_CHECK" && chmod 0777 "$DL_CHECK"
+	wget --no-check-certificate -T 5 -q -O "$MAGMOD/$TOADD.html" "https://play.google.com/store/apps/details?id=$TOADD&hl=en"
+	# Check for empty HTML page = 404 = Not Found = Custom apps don't exist on the Play Store
+	if [[ $(cat "$DL_CHECK" | grep '404' | awk '{ print $1 }') -eq "404"  ]]; then
+		echo 'a2'
+		echo -e "\nWarning: The package name of the application you just\nentered does not exist in the Play Store.\n"
+		rm -f "$ACT_BASIC_APPS"
+		rm -f "$ACT_CUST_APPS"
+		rm -f "$instant_run"
+		rm -f "$Instant_sqlite"
+		exit
+	fi
+	
+	# Exist in detach.txt or custom packages
+	# Get basic list
+	[ ! -e "$CONF" ] && echo "- Download Detach.txt file" && wget --no-check-certificate -T 5 -q -O "$MAGMOD/Detach.txt" https://github.com/xerta555/Detach-Files/raw/master/Detach.txt && chmod 0644 "/sdcard/Detach.txt"
+	
+	
+	CONF=$(ls /sdcard/Detach.txt || ls /storage/emulated/0/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
+	
+	[ ! -e "$CONF" ] && echo -e "\n!- Unable to download Detach.txt file\n!- Exit.." && sleep 1 && exit
+	BASIC_CHECK=$(cat "$CONF" | tail -n +5 | sed 's/# Other applications.*//' | grep '[A-Za-z0-9]' | sed 's/#//')
+	
+	
+	if [ $(echo "$BASIC_CHECK" | grep -no "$TOADD" | sed 's/:.*//') ]; then
+		# For basic
+		# Get line number of app to hide from basic list
+		BASIC_NUMBER=$(echo "$BASIC_CHECK" | grep -no "$TOADD"  | sed 's/:.*//')
+		echo -e "\n- Enable $TOADD in your Detach.txt file as Common app\n"; sleep 2;
+		sed -i -e "$BASIC_NUMBERs/# ${TOADD}/${TOADD}/" "$CONF"
+		# Get official app name from Play Store and write it in the service.sh file
+		BASIC_NAME_WEB=$(cat "$MAGMOD/$TOADD.html" | grep 'AHFaub' | tail -1 | cut -f1,2,3 -d'<' | sed 's/.*>//')
+		BASIC_NAME_LOCAL=$(awk "NR==$BASIC_NUMBERs" "$CONF")
+		# Grep each sqlite commands with apps titles (common apps)
+		sqlite_cmds_common=$(grep -no '# Custom Packages' "$SERVICESH" | sed 's/:.*//')
+		sqlite_cmds_final=$((sqlite_cmds_common-1))
+		sqlite_cmds_cust=$(grep -n '# Multiple' "$SERVICESH" | sed 's/:.*//')
+		sqlite_cmds_final2=$((sqlite_cmds_cust-1))
+		sed "32,$sqlite_cmds_final!d;" "$SERVICESH" | grep '[a-zA-Z0-9]' >> "$ACT_BASIC_APPS"
+		sed "$sqlite_cmds_common,$sqlite_cmds_final2!d;" "$SERVICESH" | grep '[a-zA-Z0-9]' >> "$ACT_CUST_APPS"
+		echo -e "\n	# $BASIC_NAME_LOCAL\n	./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$i'\";\n\n$TOADD\n" >> "$ACT_BASIC_APPS"
+		
+		sed -i -e '32,$d' "$SERVICESH"
+		cat "$ACT_BASIC_APPS" >> "$SERVICESH"
+		echo -e "\n\n" >> "$SERVICESH"
+		cat "$ACT_CUST_APPS" >> "$SERVICESH"
+		# Export sqlite cmds before writing all other contents in file (for Instant Run step)
+		su -c grep sqlite "$SERVICESH" | sed -i -e '1d' >> "$Instant_sqlite"
+		cat "$COMPATIBILITY" >> "$SERVICESH"
+		echo -e "\n\n# Exit\n	exit; fi\ndone &)\n" >> "$SERVICESH"
+	else
+		# For custom
+		# Grep each sqlite commands with apps titles (common apps)
+		sqlite_cmds_common=$(grep -no '# Custom Packages' "$SERVICESH" | sed 's/:.*//')
+		sqlite_cmds_final=$((sqlite_cmds_common-1))
+		sqlite_cmds_cust=$(grep -n '# Multiple' "$SERVICESH" | sed 's/:.*//')
+		sqlite_cmds_final2=$((sqlite_cmds_cust-1))
+		CUST_NAME_WEB=$(cat "$MAGMOD/$TOADD.html" | grep 'AHFaub' | tail -1 | cut -f1,2,3 -d'<' | sed 's/.*>//' | sed 's/:.*//')
+		sed "32,$sqlite_cmds_final!d;" "$SERVICESH" | grep '[a-zA-Z0-9]' >> "$ACT_BASIC_APPS"
+		sed "$sqlite_cmds_final,$sqlite_cmds_final2!d;" "$SERVICESH" | grep '[a-zA-Z0-9]' >> "$ACT_CUST_APPS"
+		echo "" >> "$ACT_CUST_APPS"
+		echo -e "\n	# $CUST_NAME_WEB\n	./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$TOADD'\";\n\n" >> "$ACT_CUST_APPS"
+		echo "" >> "$ACT_CUST_APPS"
+		sed -i -e '32,$d' "$SERVICESH"
+		cat "$ACT_BASIC_APPS" >> "$SERVICESH"
+		echo -e "\n\n" >> "$SERVICESH"
+		cat "$ACT_CUST_APPS" >> "$SERVICESH"
+		cat "$COMPATIBILITY" >> "$SERVICESH"
+		echo -e "\n\n# Exit\n	exit; fi\ndone &)\n" >> "$SERVICESH"
+	fi
+		
+	# Instant Run
 	instant_run=$MAGMOD/instant_run.sh
-	PACKAGES=$(ls /sdcard/detach.custom || ls /sdcard/detach.custom.txt || ls /sdcard/DETACH.CUSTOM || ls /sdcard/DETACH.CUSTOM.TXT || ls /sdcard/Detach.custom.txt || ls /sdcard/Detach.Custom.txt) 2>/dev/null;
-	TXT_CHECK=$MAGMOD/detach.txt
-	TXT_CHECK_BCK=$MAGMOD/detach.bak
+	instant_run_two=$MAGMOD/instant_run_two.sh
 	
-	for i in "$BAK" "$FINALCUST" "$instant_run"; do touch "$i" && chmod -R 0644 "$i"; done
+	test -e "$instant_run" || touch "$instant_run"
+	chmod 0777 "$instant_run" && chmod +x "$instant_run"
 	
-	while true
-	do
-		echo -e "\n\nPlease write the application package name\nyou want to detach from automatic PS update\n\nPackage name: "
-		read TOADD
-		break
-	done
+	PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
 	
-	while true
-	do
-		echo -e "\n\n '$TOADD' - Do you confirm ?"; sleep 2;
-		read CONFIRMADD
-		case $CONFIRMADD in
-			Y|y|Yes|yes|YES)
-						if grep -q "$TOADD" "$SERVICESH"; then
-							echo -e "\n! The name that you have entered already exist in your list\n=> Type su -c Detach -a or su and Detach -a again to add another package name in your list.\n\n"; sleep 3;
-							exit 0
-						else
-							echo -e "\n$TOADD is going to be added in your list.."; sleep 2;
-							
-							LINE2CUT=$(grep -n "# Custom Packages" "$SERVICESH" | awk '{ print $1 }' | sed 's/:#//')
-							sed -i -e "$LINE2CUT,\$d" "$SERVICESH"
-							echo -e "# Custom Packages\n" >> "$FINALCUST"
-							
-							cp -f "$PACKAGES" "$BAK"
-							chmod 0644 "$BAK"
-							ALLCUS=$(awk '{ print }' "$BAK")
-							
-							for i in $(cat "$BAK"); do echo -e "	./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$i'\";" >> "$FINALCUST"; done
-							
-							echo -e "  	./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$TOADD'\";" >> "$FINALCUST"
-							
-							cat /dev/null > "$instant_run"
-							echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGIMG}/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$instant_run"
-							cat "$FINALCUST" | tee -a "$SERVICESH" "$instant_run" 1>/dev/null
-							echo "" | tee -a "$SERVICESH" "$instant_run" 1>/dev/null
-							echo "# Exit" | tee -a "$SERVICESH" "$instant_run" 1>/dev/null
-							echo "	exit" | tee -a "$SERVICESH" "$instant_run" 1>/dev/null
-							echo "done &)" | tee -a "$SERVICESH" "$instant_run" 1>/dev/null
-							echo -e "\n\n=> $TOADD has been added to the detach list.\n\n"
-							echo -e "\nDatabase file fixed.\n\nDetach your app(s)..."; sleep 2
-							sh "$instant_run" 2>&1 >"$MAGMOD/first_detach_result.txt"
-							wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
-							
-							if grep "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
-								[ -e "$MAGMOD/silent" ] || echo -e "\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"; sleep 2
+	# Multiple Play Store accounts compatibility
+	ps_accounts=$("$MAGMOD/sqlite" $PS_DATA_PATH "SELECT account FROM ownership" | sort -u | wc -l)
+	ps_accounts_final=$((ps_accounts+1))
+	
+	cat /dev/null > "$instant_run"
+	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$instant_run"
+	
+	egrep "^[[:space:]]*./sqlite" "$SERVICESH" >> "$instant_run"
+
+	echo "" >> "$instant_run"
+
+	test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
+	chmod 0644 "$MAGMOD/first_detach_result.txt"
+	sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
+
+	if [ "$ps_accounts" -gt "1" ]; then
+		test -e "$instant_run_two" || touch "$instant_run_two"
+		chmod 0644 "$instant_run_two"
+		echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" > "$instant_run_two"
+		am force-stop com.android.vending
+		for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" > "$instant_run_two"; done
+		sed -i -e 's/.\t\/sqlite/.\/sqlite/' "$instant_run_two"
+		sed -i -e 's/..\/sqlite/.\/sqlite/' "$instant_run_two"
+		sed -i -e "s/SQLITE=\$MODDIR.\/sqlite//" "$instant_run_two"
+		echo -e '\n' >> "$instant_run_two"
+	
+		sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
+	fi
+
+	wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
+			
+	if grep "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
+		[ -e "$MAGMOD/silent" ] || echo -e $C"\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"$N; sleep 2;
+		ACTAPPS=$MAGMOD/actapps.txt
+		ACTAPPSBCK=$MAGMOD/actapps.bak
+		FINAL=$MAGMOD/final.sh
+		for o in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do touch "$o" && cat /dev/null > "$o" && chmod 0644 "$o"; done
+		grep sqlite "$instant_exit_final" > "$ACTAPPS"
+		sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
+		sed -i -e '1d' "$ACTAPPS"
+		sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
+		PLAY_DB_DIR=/data/data/com.android.vending/databases
+		cp -f "$ACTAPPS" "$ACTAPPSBCK"
+		echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$FINAL"
 		
-								ACTAPPS=$MAGMOD/actapps.txt
-								ACTAPPSBCK=$MAGMOD/actapps.bak
-								FINAL=$MAGMOD/final.sh
-		
-								for o in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do touch "$o" && cat /dev/null > "$o" && chmod 0644 "$o"; done
-		
-								grep sqlite "$SERVICESH" > "$ACTAPPS"
-								sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
-								sed -i -e '1d' "$ACTAPPS"
-								sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
-		
-								PLAY_DB_DIR=/data/data/com.android.vending/databases
-								cp -f "$ACTAPPS" "$ACTAPPSBCK"
-								echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGIMG}/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$FINAL"
-								
-								var_ACTAPPS=$(awk '{ print }' "$ACTAPPSBCK")
-								for i in $(cat "$ACTAPPSBCK"); do echo -e "$MAGMOD/sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$i' AND library_id = '3'\";" >> "$FINAL"; done
-		
-								sh "$FINAL"
-		
-								am force-stop com.android.vending
-								for f in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do rm -f "$f"; done
-								
-								echo -e "\nDetaching task finished\n"
-							else		
-								echo -e "\nDone\n"
-								[ -e "$MAGMOD/silent" ] || echo -e "\nInstant file ready to be executed, path of the file:\n $instant_run\n\n\n"
-							fi
-							break
-						fi
-		;;
-			N|n|No|no|NO) echo "\nCanceled\n"
-						exit 0
+		var_ACTAPPS=$(awk '{ print }' "$ACTAPPSBCK")
+		for i in $(echo "$var_ACTAPPS"); do echo -e "$MAGMOD/sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$i' AND library_id = '3'\";" >> "$FINAL"; done
+		sh "$FINAL"
+		am force-stop com.android.vending
 					
-		;;
-			*) echo "\n\nINVALID ENTRY, try again.\n"
-		;;
-		esac
-	done
+		echo -e $G"\nDetaching task done\n"$N
+	else		
+		echo -e $G"\nDone\n"$N
+	fi
 	
-	for j in "$BAK" "$FINALCUST"; do rm -f "$j"; done
+	for f in "$instant_run" "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/second_detach_result.txt" "$instant_run_two"; do rm -f "$f"; done
+;;
+	N|n|No|no|NO) echo $R"\nCanceled\n"$N
+	exit 0
+				
+;;
+	*) echo $R"\n\nINVALID ENTRY, try again.\n"$N
+;;
+esac
+
 	
+rm -f "$ACT_BASIC_APPS"
+rm -f "$ACT_CUST_APPS"
+# rm -f "$instant_run"
+rm -f "$Instant_sqlite"
+rm -f "$MAGMOD/first_detach_result.txt"
+rm -f $MAGMOD/*.html
+rm -f "$MAGMOD/DL_check.txt"
+
 	# Selinux statut restoring
 case "$SELINUX_STATUT" in
 	Enforcing) setenforce 1
@@ -318,76 +411,57 @@ chmod 0644 "$ACTAPPSRD"
 touch "$ACTAPPS"
 chmod 0644 "$ACTAPPS"
 
-grep sqlite "$SERVICESH" >> "$ACTAPPS"
-sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
-sed -i -e '1d' "$ACTAPPS"
 
-sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
+egrep "^[[:space:]]*./sqlite" "$SERVICESH" >> "$ACTAPPS"
+sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
+sed -i -e 's/[ \t]*//' "$ACTAPPS"
+
 
 printf '%s\n' "$ACTAPPS" | while IFS= read -r line
-	do echo -e "\n\nPresent apps\n$divider\n"
+	do echo -e "\n\nHided app(s):\n$divider\n"
 	cat "$line"
 	echo -e "\n$divider\n"
 done
 
-while true
-do
-	echo -e "\nWich app do you want to remove ?\n(Type a part or the name or the complete name)"
-	read TODEL
+echo -e $B"\nWich app do you want to remove ?\n(Type a part or the name or the complete name)"$N
+read TODEL
 	
-	echo -e "\n\nSearch for the name...\n\n"; sleep 2;
+echo -e $G"\n\nSearch for the name...\n"$N; sleep 2;
 	
-	APPLINE2REM=$(grep -no "$TODEL" "$SERVICESH" | sed "s/:$TODEL//") 2>/dev/null;
-	APPNAME2REM=$(grep "$TODEL" "$SERVICESH" | awk '{print $NF}' | sed  -e "s/'//" -e "s/'\";//") 2>/dev/null;
+APPLINE2REM=$(grep "$TODEL" "$ACTAPPS")
+APPLINENUM=$(grep -n "$APPLINE2REM" "$SERVICESH" | sed "s/:.*//")
 	
-	if [ -z "$APPLINE2REM" ]; then
-		echo -e "\n\n ! No matchs found, please refine your pattern.\n\n"; sleep 3; exit 1;
-	fi
-	if [ "$APPLINE2REM" -gt 1 ]; then
-		echo -e "\n\n ! Too much matchs found, please refine your pattern.\n\n"; sleep 3; exit 1;
-	fi
-	APPTOREMPREVIOUS=$((APPLINE2REM-1))
+if [ ! "$APPLINE2REM" ]; then
+	echo -e $R"\n\n ! No matchs found, please refine your pattern.\n\n"$N; sleep 3; exit ;
+fi
+if [ $(echo "$APPLINE2REM" | wc -l) -gt "1" ]; then
+	echo -e $R"\n\n ! Too much matchs found, please refine your pattern.\n\n"$N; sleep 3; exit ;
+fi
 
-	echo "\n\n$APPNAME2REM is ready to be deleted.\n\n"; sleep 2;
-done
+APPTOREMPREVIOUS=$((APPLINENUM-1))
+echo $B"\n\n'$APPLINE2REM' is ready to be deleted.\n\n"$N; sleep 2;
 
-
-echo -e "\n=> Do you confirm ?\n(yes or no)\n"
-while true
-do
-	read CONFTODEL
+echo -e $B"\n=> Do you confirm ?\n(yes or no)\n"$N
+read CONFTODEL
 	
-	case $CONFTODEL in
-		Y|y|Yes|yes|YES)
-				LINUP2DEL=$(sed "1,/$TODEL/d" "$SERVICESH")
-				if grep -qs '# Custom Packages' "$LINUP2DEL"; then
-					LETTER="d"
-					FINAL=$APPLINE2REM$LETTER
-					FINAL2=$APPTOREMPREVIOUS$LETTER
-					sed -i -e "$FINAL" "$SERVICESH"
-					sed -i -e "$FINAL2" "$SERVICESH"
-					echo -e "\n$APPNAME2REM has been deleted\n"; sleep 2;
-					break
-				else
-					LETTER="d"
-					FINAL=$APPLINE2REM$LETTER
-					sed -i -e "$FINAL" "$SERVICESH"
-					echo -e "\n$APPNAME has been deleted\n"; sleep 2;
-					break
-				fi
-		;;
-		N|n|No|no|NO) 
-				echo "\nCanceled\n"
-				exit 0
-		;;
-		*) echo "\n\nINVALID ENTRY, try again.\n"
-		;;
-	esac
-done
+case $CONFTODEL in
+	Y|y|Yes|yes|YES|ye|Ye)
+			sed -i -e "${APPLINENUM}d" "$SERVICESH"
+			sed -i -e "${APPTOREMPREVIOUS}d" "$SERVICESH"
+			echo -e $G"\n$APPLINE2REM has been deleted\n"$N; sleep 1;
+	;;
+	N|n|No|no|NO|Na|na) 
+			echo $R"\nCanceled\n"$N
+			exit 0
+	;;
+	*) echo $R"\n\nINVALID ENTRY, try again.\n"$N
+	;;
+esac
+
 	
 for k in "$ACTAPPS" "$ACTAPPSRD"; do rm -f "$k"; done
 
-echo -e "\nExit...\n"; sleep 2;
+echo -e $B"\nExit...\n"$N; sleep 1;
 
 # Selinux statut restoring
 case "$SELINUX_STATUT" in
@@ -403,10 +477,10 @@ esac
 
 # Kill PS app
 k() {
-	[ -e "$MAGMOD/silent" ] || echo -e "\nForce closing the Play Store app...\n"
+	[ -e "$MAGMOD/silent" ] || echo -e $B"\nForce closing the Play Store app...\n"$N
 	sleep 2
 	am force-stop com.android.vending
-	[ -e "$MAGMOD/silent" ] || echo -e "\nPS app has been force-stop.\n"
+	[ -e "$MAGMOD/silent" ] || echo -e $G"\nPS app has been force-stop.\n"$N
 	
 	# Selinux statut restoring
 case "$SELINUX_STATUT" in
@@ -420,9 +494,9 @@ esac
 
 # Clear PS datas
 c() {
-	[ -e "$MAGMOD/silent" ] || echo -e "\nWorks in progress...\n"; sleep 2;
+	[ -e "$MAGMOD/silent" ] || echo -e $B"\nWorks in progress...\n"$N; sleep 2;
 	pm clear com.android.vending
-	[ -e "$MAGMOD/silent" ] || echo -e "\nDone\n"
+	[ -e "$MAGMOD/silent" ] || echo -e $G"\nDone\n"$N
 	
 	# Selinux statut restoring
 case "$SELINUX_STATUT" in
@@ -436,66 +510,57 @@ esac
 
 # Task scheduler
 t() {
-		cat <<SCHEDULE
+cat <<SCHEDULE
 	
 	
 	
 			=== Detach scheduling ===
+			       ~ By Rom ~
 	
 => Here, many way to scheduling the detach works are possible.
-=> Just choose one of them.
+=> Just choose one of them with the corresponding number.
 	
-	1 - Tasker (application)
+	1 - Tasker (Market application)
 	2 - Crond (Linux command)
-	3 - DJS (Magisk module by VR25@xda-devlopers.com
+	3 - DJS (Magisk module made by VR25@xda-devlopers.com)
 	4 - Droid Automation (Market application)
-	5 - Your own app/tool/MOD
+	5 - Termux (Termux:Boot script mode)
+	
+	0 - Your own app/tool/MOD
+	
+	99 - Exit
 	
 	
 	
 Now just make your choice..
-(1, 2, 3, 4 or 5)
-
-(Just for information, "TAB" is Tabulation: Control-v, then Tab.)
-Or just this symbol:
-  /==========================\
-  |     |/_______________    |
-  |     |\                   |
-  |      _______________\|   |
-  |                     /|   |
-  \==========================/
-
+(1, 2, 3, 4,...)
 SCHEDULE
 
 read SCHEDU
 
 case $SCHEDU in
 	1|Tasker|tasker|TASKER)
-		echo -e "\n\nYour choice: Tasker\n"
-		if [ -d /data/data/net.dinglisch.android.taskerm ] || [ -d /system/app/net.dinglisch.android.taskerm] || [ -d /system/priv-app/net.dinglisch.android.taskerm]; then 2>/dev/null
-			echo -e "\nNext step require Busybox Magisk Module and active connexion (WIFI/Datas).\n"
+		echo -e $P"\n\nYour choice: Tasker\n"$N
+		if [ $(pm list packages net.dinglisch.android.taskerm | sed "s/package://") == "net.dinglisch.android.taskerm" ]; then
+			echo -e $B"\nNext step require Busybox Magisk Module and active connexion (WIFI/Datas).\n"; sleep 2;$N
 			bb
-			wget --no-check-certificate -T 3 -q -O "$MAGMOD/Auto_Detach_Tasker.xml" https://github.com/xerta555/Detach-Files/raw/master/Auto_Detach_Tasker.tsk.xml 2>/dev/null
-			if [ ! -e "$MAGMOD/Auto_Detach_Tasker.xml" ]; then
-				echo -e "Unable to download the necessary file!\nPlease check your connexion."
+			wget --no-check-certificate -T 5 -q -O "$MAGMOD/Auto_Detach_Tasker.prj.xml" https://github.com/xerta555/Detach-Files/raw/master/Auto_Detach_Tasker.prj.xml 2>/dev/null
+			
+			if [ ! -e "$MAGMOD/Auto_Detach_Tasker.prj.xml" ]; then
+				echo -e $R"Unable to download the necessary file!\nPlease check your connexion."$N
 				exit 0
 			fi
-			echo -e "\nHow often do you want the Detach script to be executed?\n(NUMBER for Day TAB NUMBER for Hours NUMBER for Minutes TAB NUMBER for Seconds, for no time (0 minutes for exemple) use 0).\n\n"
-			read TASKER_period
-			TASKER_period=$(echo "$TASKER_period" | sed 's/ /\t/' 2>/dev/null)
 			
-			TASKER_seconds=$(echo "$TASKER_period" | awk '{ print $4 }')
-			TASKER_minutes=$(echo "$TASKER_period" | awk '{ print $3 }')
-			TASKER_hours=$(echo "$TASKER_period" | awk '{ print $2 }')
-			TASKER_days=$(echo "$TASKER_period" | awk '{ print $1 }')
-			sed -i "59s/days/${TASKER_days}/" $MAGMOD/Auto_Detach_Tasker.xml
-			sed -i "58s/hours/${TASKER_hours}/" $MAGMOD/Auto_Detach_Tasker.xml
-			sed -i "57s/seconds/${TASKER_minutes}/" $MAGMOD/Auto_Detach_Tasker.xml
-			sed -i "56s/minutes/${TASKER_seconds}/" $MAGMOD/Auto_Detach_Tasker.xml
-			cp -f $MAGMOD/Auto_Detach_Tasker.xml /sdcard
-			echo -e "\nXML File for your Tasker app is ready:\n/sdcard/Auto_Detach_Tasker.xml\n\nJust import this file in your Tasker.\n\n"
+			echo -e $B"\nEvery how many hours do you want to run the Detach script to be executed?\nJust type the number you want.\n\nFor info: 1 to 99 hours is supported by default.\n\n"$N
+			read TASKER_period
+			
+			TASKER_period=$(if $(echo $TASKER_period | grep -qs 'hour/|hours'); then TASKER_period=$(echo $TASKER_period | sed 's/hour//' | sed 's/hours//' | sed 's/HOUR//' | sed 's/HOURS//' 2>/dev/null); fi)
+			echo -e $B"\nYou have chosen: every $TASKER_period hours\n"$N
+			sed -i -e "12s/1/$TASKER_period/" "$MAGMOD/Auto_Detach_Tasker.prj.xml"
+			cp -f $MAGMOD/Auto_Detach_Tasker.prj.xml /sdcard
+			echo -e "\nXML File for your Tasker app is ready:\n\n/sdcard/Auto_Detach_Tasker.prj.xml\n\n=> Just import this file in your Tasker.\n\n"
 		else
-			echo "\n! => Apparently you don't have install Tasker application\n! => Do you want to install it?"; sleep 2;
+			echo $R"\n! => Apparently you don't have install Tasker application\n! => Do you want to install it?"$N; sleep 2;
 			read TASKER_INSTALL
 			case $TASKER_INSTALL in
 				Y|y|Yes|yes|YES)
@@ -507,42 +572,49 @@ case $SCHEDU in
 			esac 
 		fi
 	;;
+	
 	2|cron|crond|CRON|COND|Cron|Crond)
-		echo -e "\n\nYour choice: Crond\n"
-		if [ -e /system/bin/crond ] || [ -e /system/sbin/crond ] || [ -e /system/xbin/crond ] || [ -e /sbin/crond ]; then 2>/dev/null
-			echo -e "\nChoose your time execution:\n(format: Minute (0-59) TAB Hour (0-23) TAB Day of mount (1-31) TAB Month (1-12) TAB Day of Week (0-6) (For Sunday=0 or 7)\nTAB is tabulation.\n\nCommand exemple for every 2 hours:\ncrond 0 */2 * * * /path/to/script_file.sh\n\n"
+		echo -e $P"\n\nYour choice: Crond\n"$N
+		if [ -e /system/bin/crond ] || [ -e /system/sbin/crond ] || [ -e /system/xbin/crond ] || [ -e /sbin/crond ]; then
+			echo -e $B"\nPlease enter your full crond command below.\nFormats for times: Minute (0-59) SPACE Hour (0-23) SPACE Day of mount (1-31) SPACE Month (1-12) SPACE Day of Week (0-6) (For Sunday=0 or 7)\nCommand exemple for every 2 hours:\ncrond 0 */2 * * * /folder/to/script_file.sh\n\n"$N
 			read crond_entry
-			Minute=$(awk "{ print $1 $crond_entry}")
-			Hour=$(awk "{ print $2 $crond_entry}")
-			Day_of_mounth=$(awk "{ print $3 $crond_entry}")
-			Month=$(awk "{ print $4 $crond_entry}")
-			Day_of_week=$(awk "{ print $5 $crond_entry}")
-			
-			for c in "$Minute" "$Hour" "$Day_of_mounth" "$Month" "$Day_of_week"
-				do if ! grep -qs '[0-9]/|*' $(echo "$c"); then
-					echo -e "\n! Invalid input for \$c.\nPlease try again.\n\n"
-					fi
-				done
-			crond 
+			$crond_entry
 		fi
 	;;
+	
 	3|DJS|Djs|djs)
-		echo -e "\n\nYour choice: DJS Module\n"
+		echo -e $P"\n\nYour choice: DJS Module\n"$N
 		if [ -e "$MAGIMG/djs/module.prop" ] && [ ! -e "$MAGIMG/djs/update" ]; then
-			echo -e "\nEvery how many hours do you want to run the Detach Magic?\n(A number)\n"
+			echo -e $B"\nEvery how many hours do you want to run the Detach Magic with djs module?\n(A number)\n"$N
+			read djs_user_input
+			echo -e $B"\nSetup the schedule..\n"$N
+			wget --no-check-certificate -T 5 -q -O "$MAGMOD/djs_script.sh" https://github.com/xerta555/Detach-Files/raw/master/Detach_djs.sh 2>/dev/null
+			
+			if [ ! -e "$MAGMOD/djs_script.sh" ]; then
+				echo -e $R"Unable to download the necessary file!\nPlease check your connexion."$N
+				exit 0
+			fi
+			
+			echo -e $B"\nEvery how many hours do you want to run the detach script ?"$N
 			read djs_hours
-			echo -e "\nSetup the schedule..\n"
-			djsc -a "boot while true; do su -c Detach -id > /dev/null 2>&1; sleep "$djs_hours"h; done"; djsd
-			echo -e "\nDone\n"
+			djs_hours_1=$(echo "$djs_hours" | grep '[1-9]')
+			if [ "$djs_hours_1" ]; then
+				djs_hours__pre_final=$((djs_hours_1 * 60))
+				djs_hours__final=$((djs_hours__pre_final * 60))
+			fi
+			djs-config --append boot "watch -tn ${djs_hours__final} detach -id > /dev/null 2>&1"
+			
+			echo -e $G"\nPlease note that you can turn off DJS by doing enter 'djsd.|djsd-stop' command in your terminal.\n\nDone\n"$N
 		else
-			echo -e "You have to:\n - Install djs module with Magisk Manager\n - Reboot your device\n - And run again su -c detach -t in your terminal emulator"
+			echo -e $Y"You have to:\n - Install djs module with Magisk Manager\n - Reboot your device\n - And run again su -c detach -t in your terminal emulator"$N
 		fi
 	;;
+	
 	4|"Droid Automation"|"DROID AUTO"|"DROID AUTOMATION"|"droid automation"|Droid|DROID|droid)
-		echo -e "\n\nYour choice: Droid Automation\n\n- Check your app setup...\n"
+		echo -e $P"\n\nYour choice: Droid Automation\n\n- Check your app setup...\n"$N
 		
-		if [ ! -d /data/data/com.wakdev.droidautomation.free ] || [ ! -d /system/app/com.wakdev.droidautomation.free ] || [ ! -d /system/priv-app/com.wakdev.droidautomation.free ]; then
-			echo "\n! => Apparently you don't have install Droid Automation\n! => Do you want to install it?"; sleep 2;
+		if [ -z $(pm list packages com.wakdev.droidautomation.free) ]; then
+			echo $R"\n! => Apparently you don't have install Droid Automation\n! => Do you want to install it?"$N; sleep 2;
 			read TASKER_INSTALL
 			case $TASKER_INSTALL in
 				Y|y|Yes|yes|YES)
@@ -553,11 +625,13 @@ case $SCHEDU in
 			esac
 		fi
 		
-		echo -e "\nEvery how many hours minutes seconds do you want to run the Detach Magic?\n(Separate hours minutes and seconds with spaces)\n\n"
+		echo -e $B"\nEvery how many hours minutes seconds do you want to run the Detach Magic?\n(Separate hours minutes and seconds with spaces)\n\n"$N
 		read DA
-		DA1=$(echo "$DA" | awk '{print $1}')
+		DA3=$(echo "$DA" | awk '{print $1}')
 		DA2=$(echo "$DA" | awk '{print $2}')
-		DA3=$(echo "$DA" | awk '{print $3}')
+		DA1=$(echo "$DA" | awk '{print $3}')
+		
+		# Juste in case of (backup/restore).
 		NOW_YEAR=$(date +"%Y")
 		NOW_MONTH=$(date +"%m")
 		NOW_DAY=$(date +"%d")
@@ -565,17 +639,61 @@ case $SCHEDU in
 		NOW_HOURS=$(date +"%H")
 		NOW_MINUTES=$(date +"%M")
 		NOW_SECONDS=$(date +"%S")
+		# Juste in case of (backup/restore).
 		
-		echo '{"automation.profile.name":"Detach","automation.profile.enabled":true,"automation.profile.triggers.length":1,"automation.profile.triggers.data":[{"triggers.fields":{"field3":"$DA3","field1":"$DA1","field2":"$DA2"},"triggers.config":{"itemUpdate":"true","itemTriggerExtra":null,"requestType":"38","itemTrigger":"18367","itemHash":"833cf518-c11b-411c-a412-98900f11705a","itemDescription":"Déclencher toutes les : 05h.06m.07s."}}],"automation.profile.tasks.length":1,"automation.profile.tasks.data":[{"task.fields":{"field1":"su -c detach -id"},"task.config":{"itemUpdate":"false","requestType":"6666","itemTask":"su -c detach -id","itemDescription":"su -c detach -id","itemHash":"be7b37d9-1573-45f5-b20c-42df0a90be6a"}}]}' >> "/data/data/com.wakdev.droidautomation.free/files/profiles/automation/$NOW_YEAR$NOW_MONTH$NOW_DAY$NOW_HOURS$NOW_MINUTES$NOW_SECONDS"
-		echo -e "\nYou could be asked for su access by Magisk or SuperSU (or any other su app manager)\n\nDone\n"
+		
+		test -d /data/data/com.wakdev.droidautomation.free/files/profiles/automation/ || mkdir -p /data/data/com.wakdev.droidautomation.free/files/profiles/automation/
+		
+		test -e /sdcard/Droid_Automation_Detach.json | rm -f /sdcard/Droid_Automation_Detach.json
+		
+		echo "{\"automation.profile.name\":\"Droid Automation Detach\",\"automation.profile.enabled\":true,\"automation.profile.triggers.length\":1,\"automation.profile.triggers.data\":[{\"triggers.fields\":{\"field3\":\"${DA3}\",\"field1\":\"${DA1}\",\"field2\":\"${DA2}\"},\"triggers.config\":{\"itemUpdate\":\"true\",\"itemTriggerExtra\":null,\"requestType\":\"38\",\"itemTrigger\":\"18367\",\"itemHash\":\"833cf518-c11b-411c-a412-98900f11705a\",\"itemDescription\":\"Déclencher toutes les : 05h.06m.07s.\"}}],\"automation.profile.tasks.length\":1,\"automation.profile.tasks.data\":[{\"task.fields\":{\"field1\":\"su -c detach -id\"},\"task.config\":{\"itemUpdate\":\"false\",\"requestType\":\"6666\",\"itemTask\":\"su -c detach -id\",\"itemDescription\":\"su -c detach -id\",\"itemHash\":\"be7b37d9-1573-45f5-b20c-42df0a90be6a\"}}]}" >> /sdcard/Droid_Automation_Detach.json
+		
+		echo -e $G"\nFile successfully generated at:\n/sdcard/Droid_Automation_Detach.json\n\n=> Now you just have to import this file in your Droid Automation app.\n\nINFO: It would be a good idea to run the profile in the Options tab of the profile, in order to grant Droid 'su' access rights so that you don't have to do this later.\n"$N
 	;;
-	5|"My tool"|Mine)
-		if [ ! -e "$MAGMOD/instant_run.sh" ]; then
-			echo -e "\nWarning: Before scheduling, you must have run the command at least once time:\nsu -c detach -id\n\nThen you can use the schedule feature of your choice freely.\n\nRemember that to update the list of your detached applications, you must flash the module again via TWRP or Magisk Manager (prefer Magisk Manager preferably, but TWRP remains compatible with the module in the absolute).\n\n"; sleep 2;
-		else
-			echo -e "\nCommand (best method - require root access):\n su -c Detach -id\n\n"; sleep 1;
-			echo -e "\n\nPath of the script file: $MAGMOD/instant_run.sh\n"; sleep 2;
+	5|Termux|termux|Termux:Boot|termux:boot|termuxboot|TERMUXBOOT|TermuxBoot|Termuxboot)
+		echo -e $P"\n\nYour choice: Termux:Boot\n\n- Check your app setup...\n"$N
+		
+		if [ -z $(pm list packages com.termux.boot) ]; then
+			echo $R"\n! => Apparently you don't have install Droid Automation\n! => Do you want to install it?"$N; sleep 2;
+			read TASKER_INSTALL
+			case $TASKER_INSTALL in
+				Y|y|Yes|yes|YES)
+					am start -a android.intent.action.VIEW -d 'https://play.google.com/store/apps/details?id=com.termux.boot&hl=en'
+				;;
+				N|n|No|no|NO)
+					exit 0
+				;;
+			esac
 		fi
+		termux_dir=/data/data/com.termux/files/home/.termux/boot
+		termux_file=Detach_for_Termux.sh
+		echo -e "\n\nWe are going to open Termux:Boot app, once you will have open it, you will have to come back here in your terminal app (here), writing 'OK', and confirm by press ENTER key.\n\n"
+			
+		echo -e "Shall we go?\n(Yes)\n"
+					
+		read termux_confirm
+		case $termux_confirm in
+			Yes|yes|YES) am start -n com.termux.boot/com.termux.boot.BootActivity
+			;;
+			*) echo -e $R"\nInvalid input\n"$N
+			;;
+		esac
+		
+		mkdir -p "$termux_dir"
+		echo -e "termux-wake-lock\nsu -c detach -id\n" >> "$termux_dir/$termux_file"
+		chmod 0644 "$termux_dir/$termux_file" && chmod +x "$termux_dir/$termux_file"
+		echo -e "\nDone !\n\n-Make sure DJS module is enabled in your Magisk Manager\nReboot your device\n- Profit!\n\n"			
+	;;
+	0|"My tool"|Mine)
+		if [ ! -e "$MAGMOD/instant_run.sh" ]; then
+			echo -e $P"\nWarning: Before scheduling, you must have run the command at least once time:\nsu -c detach -id\n\nThen you can use the schedule feature of your choice freely.\n\nRemember that to update the list of your detached applications, you must flash the module again via TWRP or Magisk Manager (prefer Magisk Manager preferably, but TWRP remains compatible with the module in the absolute).\n\n"; sleep 2;$N
+		else
+			echo -e $G"\nCommand (best method - require root access):\n su -c Detach -id\n\n"$N; sleep 1;
+			echo -e $Y"\n\nPath of the script file: $MAGMOD/instant_run.sh\n"; sleep 2;$N
+		fi
+	;;
+	99|Quit|quit|QUIT|EXIT|Exit|e)
+		exit
 	;;
 esac
 		
@@ -592,18 +710,18 @@ esac
 # Silent mode
 s() {
 	if [ -e "$SILENT" ]; then
-		echo -e "\nSilent mode actualy: Enabled"; sleep 2;
+		echo -e $G"\nSilent mode actualy: Enabled"$N; sleep 2;
 	else
-		echo -e "\nSilent mode actualy: Disabled"; sleep 2;
+		echo -e $G"\nSilent mode actualy: Disabled"$N; sleep 2;
 	fi
 		
 	if [ ! -e "$SILENT" ]; then
 		touch "$SILENT"
 		chmod 0644 "$SILENT"
-		echo -e "..\nNew mode: Enabled\n"; sleep 2;
+		echo -e $G"..\nNew mode: Enabled\n"$N; sleep 2;
 	else
 		rm -f "$SILENT"
-		echo -e "..\nNew mode: Disabled\n"; sleep 2;
+		echo -e $G"..\nNew mode: Disabled\n"$N; sleep 2;
 	fi
 	
 	# Selinux statut restoring
@@ -626,14 +744,38 @@ $divider
 Welcome to the Detach Magisk module
 $divider
 $divider
-This MOD have been ported by Rom@xda-developers from the initial MOD by
+MOD ported by Rom@xda-developers from MOD by
 hinxnz@xda-developers to works on Magisk v17+.
 $divider
 
 
-Usage of Detach <option(s)> :
+Usage: Detach [options]
 
-$separator
+Options:
+$divider
+-id (or --instant-detach)          instantly detach apps
+-l (or --list-app)                 list actual detached apps
+-a (or --add-app)                  hide new application
+-r (or --rem-app)                  un-hide application 
+-k (or --fill)                     force-stop Play Store run
+-c (or --clear-PS-data)            clear Play Store datas
+-t (or --toogle-silent-mode)       toggle silent mode
+
+HELP
+
+if [ -e "$MAGMOD/silent" ]; then
+	exit
+else	
+	echo -e "\nNeed more infos?\n(Yes or No)\n\n"
+
+	read HELP_MORE
+
+	case $HELP_MORE in
+		Y|y|Yes|yes|YES)
+
+	cat <<HELP_PLUS
+
+
 -id or --instant-detach
 => Instantly remove desired applications from the Play Store.
 NB: This feature let a file ready to be executed by any app like
@@ -651,7 +793,7 @@ confirm your action by a yes or a no.
 
 
 -r or --rem-app
-=> Use this function if you want to remove from the detach feature.
+=> Use this function if you want to remove application from the detach feature.
 By using this feature, you will have to provide a pattern (a part or the full name) of the app name.
 You will be asked to confirm the action with a yes or a name as if you were adding an application.
 
@@ -666,7 +808,7 @@ usefull to take changes made by this MOD.
 -c|--clear-PS-data
 => Please be carrefull with this function because it purely cleanup
 the data of your Play Store app (PS is an abbreviation of Play Store). So by using it,
-it willn't prompt you to confirm this action. After that PS data will be cleared,
+it will not prompt you to confirm this action. After that PS data will be cleared,
 your recent app(s) updates will be deleted and the databases files of your PS
 will need to be generated again, and it can take at maximum 1 or 2 hours.
 So use it with caution !
@@ -700,8 +842,12 @@ Git repo: https://github.com/xerta555/Detach
 Module-Repo link for Magisk: https://github.com/Magisk-Modules-Repo/Detach
 	
 	
-	
-HELP
+HELP_PLUS
+;;
+		N|n|No|no|NO) exit
+;;
+	esac
+fi
 
 # Selinux statut restoring
 case "$SELINUX_STATUT" in
@@ -720,155 +866,153 @@ BBPATH=$MAGIMG/busybox-ndk
 busybox_magisk=$(ls "$BBPATH/system/bin/busybox" || ls "$BBPATH/system/xbin/busybox" || ls /system/xbin/busybox || ls /system/bin/busybox || ls /system/sbin/busybox || ls /sbin/busybox) 2>/dev/null
 
 if [ -z "$busybox_magisk" ]; then
-	echo -e "\n\nDo you want to check if you have the Busybox Magisk module on your device ?\n(Type yes or no)\n\n"
+	echo -e $B"\n\nYou would not have installed the Busybox module a priori."$N $C"\nDo you want to install the module now?\n(Type yes or no)\n\n"$N
 	read bbox
 	case $bbox in
 		Y|y|Yes|yes|YES)
 				
 		mkdir -p /dev/tmp/Busybox-dl
-		test -d /dev/tmp/Busybox-dl && INSTALLER=/dev/tmp/Busybox-dl || echo -e "\n\nProblem:=> Unable to check your Busybox setup!!\nFix: Install it directly by Magisk Manager, in 'Downloads' tab.\n\n" | exit
-			echo -e "\nBusybox is already installed.\n"
-			echo -e "\n"
-			echo -e "! \nNo Busybox Magisk module detected.\nOr you don't have the last version\n\nProcessing Busybox setup...\n"
-			echo -e "\n=====================================\n\nBusybox Installer Script\nPorted to works with Detach module by Rom\nAll credits to osm0sis@xda-developers\n\n=====================================\n\n"
+		test -d /dev/tmp/Busybox-dl && INSTALLER=/dev/tmp/Busybox-dl || echo -e $R"\n\nProblem:=> Unable to check your Busybox setup!!\nFix: Install it directly by Magisk Manager, in 'Downloads' tab.\n\n"$N && exit
+		echo -e $P"! \n\nNo Busybox Magisk module detected.\nOr you don't have the last version\n\nProcessing Busybox setup...\n"$N
+		echo -e $P"\n=====================================\n\nBusybox Installer Script\nPorted to works with Detach module by Rom\nAll credits to osm0sis@xda-developers\n\n=====================================\n\n"$N
 		
-			echo -e "\n- Downloading...\n"; sleep 2;
-			wget --no-check-certificate -q -O "$INSTALLER/busybox-ndk.zip" https://codeload.github.com/Magisk-Modules-Repo/busybox-ndk/zip/master 2>/dev/null
+		echo -e $P"\n- Downloading...\n"; sleep 2;
+		wget --no-check-certificate -T 5 -q -O "$INSTALLER/busybox-ndk.zip" https://codeload.github.com/Magisk-Modules-Repo/busybox-ndk/zip/master 2>/dev/null
 			
-			if [ ! -e "$INSTALLER/busybox-ndk.zip" ]; then
-				echo -e "\nUnable to download pre-requested Busybox module.\nDownload it yourself by Magisk Manager (in Download section).\n\n"
-				am start -n com.topjohnwu.magisk/a.c
-				exit 1
-			else
-			
-				ZIPFILE=$INSTALLER/busybox-ndk.zip
-	
-				test -e /data/adb/magisk && adb=adb
-	
-				dev=/dev
-				devtmp=/dev/tmp
-				test -e /data/adb/magisk/busybox && magiskbb=/data/adb/magisk/busybox
-				test "$magiskbb" && export PATH="$magiskbb:$PATH"
-	
-				zipextract=busybox-ndk
-	
-				test -f /system/build.prop && root=/system
-	
-				choice=$(basename "$ZIPFILE")
-	
-				action=installation
-				nolinks=1
-	
-				echo -e "\n- Extracting files...\n"; sleep 2;
-	
-				mkdir -p "$dev/tmp/$zipextract"
-	
-				unzip -oj "$ZIPFILE" busybox-ndk-master/module.prop 'busybox-ndk-master/busybox*' -d "$devtmp/$zipextract"
-				chmod 0777 "$dev/tmp/$zipextract/*"
-	
-				echo -e "\nInstalling...\n"; sleep 2;
-	
-				abi=$(getprop ro.product.cpu.abi);
-				case $abi in
-					arm*|x86*|mips*) ;;
-					*) abi=$(getprop ro.product.cpu.abi);;
-				esac
+		if [ ! -e "$INSTALLER/busybox-ndk.zip" ]; then
+			echo -e $R"\nUnable to download pre-requested Busybox module.\nDownload it yourself by Magisk Manager (in Download section).\n\n"$N
+			am start -n com.topjohnwu.magisk/a.c
+			exit 1
+		else
 		
-				case $abi in
-					arm*|x86*|mips*) ;;
-					*) abi=$(getprop ro.product.cpu.abi $root/default.prop);;
-				esac
-				case $abi in
-					arm64*) arch=arm64;;
-					arm*) arch=arm;;
-					x86_64*) arch=x86_64;;
-					x86*) arch=x86;;
-					mips64*) arch=mips64;;
-					mips*) arch=mips;;
-					*) echo "Unknown architecture: $abi"; abort; exit 2;;
-				esac
+			ZIPFILE=$INSTALLER/busybox-ndk.zip
+
+			test -e /data/adb/magisk && adb=adb
+
+			dev=/dev
+			devtmp=/dev/tmp
+			test -e /data/adb/magisk/busybox && magiskbb=/data/adb/magisk/busybox
+			test "$magiskbb" && export PATH="$magiskbb:$PATH"
+
+			zipextract=busybox-ndk
+
+			test -f /system/build.prop && root=/system
+
+			choice=$(basename "$ZIPFILE")
+
+			action=installation
+			nolinks=1
+
+			echo -e $P"\n- Extracting files...\n"$N; sleep 2;
+
+			mkdir -p "$dev/tmp/$zipextract"
+
+			unzip -oj "$ZIPFILE" busybox-ndk-master/module.prop 'busybox-ndk-master/busybox*' -d "$devtmp/$zipextract"
+			chmod 0777 "$dev/tmp/$zipextract/*"
+
+			echo -e $P"\nInstalling...\n"$N; sleep 2;
+
+			abi=$(getprop ro.product.cpu.abi);
+			case $abi in
+				arm*|x86*|mips*) ;;
+				*) abi=$(getprop ro.product.cpu.abi);;
+			esac
 	
-				echo -e "\nUsing architecture: $arch\n"; sleep 2;
-	
-				modname=busybox-ndk
-	
-				magisk=$BBPATH/system
-	
-				target=$magisk/xbin
+			case $abi in
+				arm*|x86*|mips*) ;;
+				*) abi=$(getprop ro.product.cpu.abi $root/default.prop);;
+			esac
+			case $abi in
+				arm64*) arch=arm64;;
+				arm*) arch=arm;;
+				x86_64*) arch=x86_64;;
+				x86*) arch=x86;;
+				mips64*) arch=mips64;;
+				mips*) arch=mips;;
+				*) echo $R"Unknown architecture: $abi"$N; abort; exit 2;;
+			esac
+
+			echo -e $P"\nUsing architecture: $arch\n"$N; sleep 2;
+
+			modname=busybox-ndk
+
+			magisk=$BBPATH/system
+
+			target=$magisk/xbin
 		
-				echo -e "\nUsing path: $target\n"; sleep 2;
-	
-				mkdir -p "$target"
-	
-				TMPBUSYBOXDIR=$dev/tmp/busybox-ndk
-	
-				cp -f "$TMPBUSYBOXDIR/busybox-$arch" "$target/busybox"
-				chown 0:0 "$target/busybox"
-				chmod 755 "$target/busybox"
-				cp -f "$TMPBUSYBOXDIR/module.prop" "$BBPATH"
-				touch "$BBPATH/auto_mount"
-				touch "$BBPATH/update"
-	
-				echo -e "\nCleaning...\n"; sleep 2;
-	
-				cleanup="$mnt$magisk/xbin $target"
-	
-				for dir in $cleanup; do
-					cd "$dir"
-					for i in $(ls -al `find -type l` | $target/busybox awk '{ print $(NF-2) ":" $NF }'); do
-						case $(echo $i | $target/busybox cut -d: -f2) in
-							*busybox) list="$list $dir/$(echo $i | $target/busybox cut -d: -f1)";;
-						esac
-					done
-				done
-	
-				echo "Creating symlinks..."; sleep 2;
-				sysbin="$(ls $root/bin)"
-				existbin="$(ls $imgmnt/busybox-ndk/system/bin 2>/dev/null)"
-				for applet in `$target/busybox --list`; do
-					case $target in
-						*/bin)
-							if [ "$(echo "$sysbin" | $target/busybox grep "^$applet$")" ]; then
-								if [ "$(echo "$existbin" | $target/busybox grep "^$applet$")" ]; then
-									"$target/busybox" ln -sf busybox "$applet"
-								fi
-							else
-								"$target/busybox" ln -sf busybox "$applet"
-							fi
-						;;
-						*) "$target/busybox" ln -sf busybox "$applet"
-						;;
+			echo -e $P"\nUsing path: $target\n"$N; sleep 2;
+
+			mkdir -p "$target"
+
+			TMPBUSYBOXDIR=$dev/tmp/busybox-ndk
+
+			cp -f "$TMPBUSYBOXDIR/busybox-$arch" "$target/busybox"
+			chown 0:0 "$target/busybox"
+			chmod 755 "$target/busybox"
+			cp -f "$TMPBUSYBOXDIR/module.prop" "$BBPATH"
+			touch "$BBPATH/auto_mount"
+			touch "$BBPATH/update"
+
+			echo -e $G"\nCleaning...\n"$N; sleep 2;
+
+			cleanup="$mnt$magisk/xbin $target"
+
+			for dir in $cleanup; do
+				cd "$dir"
+				for i in $(ls -al `find -type l` | $target/busybox awk '{ print $(NF-2) ":" $NF }'); do
+					case $(echo $i | $target/busybox cut -d: -f2) in
+						*busybox) list="$list $dir/$(echo $i | $target/busybox cut -d: -f1)";;
 					esac
 				done
-		
-				test "$magisk" && chcon -hR 'u:object_r:system_file:s0' "$target"
-				rm -rf /dev/tmp
+			done
+
+			echo $P"Creating symlinks..."$N; sleep 2;
+			sysbin="$(ls $root/bin)"
+			existbin="$(ls $imgmnt/busybox-ndk/system/bin 2>/dev/null)"
+			for applet in `$target/busybox --list`; do
+				case $target in
+					*/bin)
+						if [ "$(echo "$sysbin" | $target/busybox grep "^$applet$")" ]; then
+							if [ "$(echo "$existbin" | $target/busybox grep "^$applet$")" ]; then
+								"$target/busybox" ln -sf busybox "$applet"
+							fi
+						else
+							"$target/busybox" ln -sf busybox "$applet"
+						fi
+					;;
+					*) "$target/busybox" ln -sf busybox "$applet"
+					;;
+				esac
+			done
+	
+			test "$magisk" && chcon -hR 'u:object_r:system_file:s0' "$target"
+			rm -rf /dev/tmp
 				
-				echo -e "\nCheck module setup\n"; sleep 2;
-				
-				if [ -a "$target/awk" ]; then
-					echo -e "\n- Done!\n- Reboot your device to apply changes\n(Think to save your present works (docs, music players,webrbowsers,...)\n\n"; sleep 2;
-					exit
-				else
-					echo -e "\n!! Busybox setup problem detected.\n=> Please install the module directly with Magisk Manager\n ('Downloads' tab).\n"
-				exit 1
-				fi
+			echo -e $P"\nCheck module setup\n"$N; sleep 2;
+			
+			if [ -a "$target/awk" ]; then
+				echo -e $G"\n- Done!\n- Reboot your device to apply changes\n(Think to save your present works (docs, music players,webrbowsers,...)\n\n"$N; sleep 2;
+				exit
+			else
+				echo -e $R"\n!! Busybox setup problem detected.\n=> Please install the module directly with Magisk Manager\n ('Downloads' tab).\n"$N
+			exit 1
 			fi
+		fi
 		break
-	;;
-	N|n|No|no|NO)
-		echo -e "\nBusybox is installed\nNext...\n"; sleep 1;
-	;;
-	*)
-		echo "\n\nINVALID ENTRY, try again if you want\nExit now...\n"; sleep 3;
-		break
-	;;
+		;;
+		N|n|No|no|NO)
+			echo -e $G"\nBusybox is installed\nNext...\n"$N; sleep 1;
+		;;
+		*)
+			echo $R"\n\nINVALID ENTRY, try again if you want\nExit now...\n"$N; sleep 2;
+			break
+		;;
 	esac
 fi
 }
 
-divider="-------------------------------------------------"
-separator="-----------------------------------------------------------------------------------------------------------"
+divider="---------------"
+separator="-------------"
 
 clear
 
