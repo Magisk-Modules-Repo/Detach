@@ -544,9 +544,9 @@ case $SCHEDU in
 		if [ $(pm list packages net.dinglisch.android.taskerm | sed "s/package://") == "net.dinglisch.android.taskerm" ]; then
 			echo -e $B"\nNext step require Busybox Magisk Module and active connexion (WIFI/Datas).\n"; sleep 2;$N
 			bb
-			wget --no-check-certificate -T 5 -q -O "$MAGMOD/Auto_Detach_Tasker.prj.xml" https://github.com/xerta555/Detach-Files/raw/master/Auto_Detach_Tasker.prj.xml 2>/dev/null
+			wget --no-check-certificate -T 5 -q -O "$MAGMOD/Auto_Detach_Tasker.prf.xml" https://github.com/xerta555/Detach-Files/raw/master/Auto_Detach_Tasker.prf.xml 2>/dev/null
 			
-			if [ ! -e "$MAGMOD/Auto_Detach_Tasker.prj.xml" ]; then
+			if [ ! -e "$MAGMOD/Auto_Detach_Tasker.prf.xml" ]; then
 				echo -e $R"Unable to download the necessary file!\nPlease check your connexion."$N
 				exit 0
 			fi
@@ -556,9 +556,9 @@ case $SCHEDU in
 			
 			TASKER_period=$(if $(echo $TASKER_period | grep -qs 'hour/|hours'); then TASKER_period=$(echo $TASKER_period | sed 's/hour//' | sed 's/hours//' | sed 's/HOUR//' | sed 's/HOURS//' 2>/dev/null); fi)
 			echo -e $B"\nYou have chosen: every $TASKER_period hours\n"$N
-			sed -i -e "12s/1/$TASKER_period/" "$MAGMOD/Auto_Detach_Tasker.prj.xml"
-			cp -f $MAGMOD/Auto_Detach_Tasker.prj.xml /sdcard
-			echo -e "\nXML File for your Tasker app is ready:\n\n/sdcard/Auto_Detach_Tasker.prj.xml\n\n=> Just import this file in your Tasker.\n\n"
+			sed -i -e "13s/hour/$TASKER_period/" "$MAGMOD/Auto_Detach_Tasker.prf.xml"
+			cp -f $MAGMOD/Auto_Detach_Tasker.prf.xml /sdcard
+			echo -e "\nTasker profile file for your Tasker app is ready:\n\n/sdcard/Auto_Detach_Tasker.prf.xml\n\n=> Just import this file in your Tasker:\n- Longpress on 'PROFILES' tab.\n'- Import Profile'\n- Choose your storage icon on bottom right corner\n- Browse to your file\n- Confirm the import in Tasker app\n- Enjoy\n\n"
 		else
 			echo $R"\n! => Apparently you don't have install Tasker application\n! => Do you want to install it?"$N; sleep 2;
 			read TASKER_INSTALL
@@ -576,7 +576,7 @@ case $SCHEDU in
 	2|cron|crond|CRON|COND|Cron|Crond)
 		echo -e $P"\n\nYour choice: Crond\n"$N
 		if [ -e /system/bin/crond ] || [ -e /system/sbin/crond ] || [ -e /system/xbin/crond ] || [ -e /sbin/crond ]; then
-			echo -e $B"\nPlease enter your full crond command below.\nFormats for times: Minute (0-59) SPACE Hour (0-23) SPACE Day of mount (1-31) SPACE Month (1-12) SPACE Day of Week (0-6) (For Sunday=0 or 7)\nCommand exemple for every 2 hours:\ncrond 0 */2 * * * /folder/to/script_file.sh\n\n"$N
+			echo -e $B"\nPlease enter your full crond command below.\nFormats for times: Minute (0-59) SPACE Hour (0-23) SPACE Day of mount (1-31) SPACE Month (1-12) SPACE Day of Week (0-6) (For Sunday=0 or 7)\nCommand exemple for every 2 hours:\ncrond 0 */2 * * * su -c detach -id\n\n"$N
 			read crond_entry
 			$crond_entry
 		fi
@@ -584,18 +584,10 @@ case $SCHEDU in
 	
 	3|DJS|Djs|djs)
 		echo -e $P"\n\nYour choice: DJS Module\n"$N
-		if [ -e "$MAGIMG/djs/module.prop" ] && [ ! -e "$MAGIMG/djs/update" ]; then
-			echo -e $B"\nEvery how many hours do you want to run the Detach Magic with djs module?\n(A number)\n"$N
-			read djs_user_input
-			echo -e $B"\nSetup the schedule..\n"$N
-			wget --no-check-certificate -T 5 -q -O "$MAGMOD/djs_script.sh" https://github.com/xerta555/Detach-Files/raw/master/Detach_djs.sh 2>/dev/null
-			
-			if [ ! -e "$MAGMOD/djs_script.sh" ]; then
-				echo -e $R"Unable to download the necessary file!\nPlease check your connexion."$N
-				exit 0
-			fi
-			
-			echo -e $B"\nEvery how many hours do you want to run the detach script ?"$N
+		busybox_magisk=$(ls "$BBPATH/system/bin/busybox" || ls "$BBPATH/system/xbin/busybox" || ls /system/xbin/busybox || ls /system/bin/busybox || ls /system/sbin/busybox || ls /sbin/busybox || ls /system/bin/watch || ls /system/xbin/watch || ls /system/sbin/watch || ls /sbin/watch) 2>/dev/null
+		
+		if [ -e "$MAGIMG/djs/module.prop" ] && [ ! -e "$MAGIMG/djs/update" ] && test $busybox_magisk; then
+			echo -e $B"\nEvery how many hours do you want to run the Detach Magic with djs module?\n(Type a number)\n"$N
 			read djs_hours
 			djs_hours_1=$(echo "$djs_hours" | grep '[1-9]')
 			if [ "$djs_hours_1" ]; then
