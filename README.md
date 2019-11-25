@@ -15,7 +15,7 @@ You can access the simple mode by put a simple file `simple_mode.txt` in your `/
 <br />
 
 <b><h3>:scroll: Setup steps:</h3></b>
-- Start by downloading the `Detach.txt` file to your `/sdcard/` folder: <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/Detach.txt">Detach.txt</a>
+- Start by downloading the <a href="https://github.com/xerta555/Detach-Files/raw/master/Detach.txt">Detach.txt</a> file to your `/sdcard/` folder: <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/Detach.txt">Detach.txt</a>
   - (equivalent to `/storage/emulated/0/`)
 - Uncomment the common app(s) you want in this file
 - Save changes
