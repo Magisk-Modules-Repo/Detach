@@ -17,15 +17,15 @@ SQLITE=$MODDIR/sqlite
 
 # Wait till boot has completed'
 (while [ 1 ]; do
-	if [ `getprop sys.boot_completed` = 1 ]; then sleep 60
-			
+if [ `getprop sys.boot_completed` = 1 ]; then sleep 60
+
 # Disable service that populates database
 # (in investigation..)
 	
 # Stop playstore to make changes
-		am force-stop com.android.vending
+	am force-stop com.android.vending
 
 # Change directory'
-		cd $MODDIR
+	cd $MODDIR
 
 # Detach following apps from market
