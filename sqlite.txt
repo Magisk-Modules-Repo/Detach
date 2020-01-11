@@ -1,0 +1,1 @@
+./sqlite $PLAY_DB_DIR/library.db "UPDATE ownership SET library_id = \'u-wl\' where doc_id = \'&\'";
