@@ -14,6 +14,9 @@
 You can access the simple mode by put a simple file `simple_mode.txt` in your `/sdcard/` folder and flash the module.<br /></h5>
 <br />
 
+NOTE BEFORE INSTALL: DON'T FLASH THIS MODULE IN TWRP. USE MAGISK MANAGER ONLY TO INSTALL
+<br />
+
 <b><h3>:scroll: Setup steps:</h3></b>
 - Start by downloading the <a href="https://github.com/xerta555/Detach-Files/raw/master/Detach.txt">Detach.txt</a> file to your `/sdcard/` folder: <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/Detach.txt">Detach.txt</a>
   - (equivalent to `/storage/emulated/0/`)
