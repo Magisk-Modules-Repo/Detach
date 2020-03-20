@@ -6,7 +6,7 @@
 menu() {
 # Initial stuff
 magisk=$(ls /data/adb/magisk/magisk || ls /sbin/magisk) 2>/dev/null;
-MAGISK_VERSION=$($magisk -c | sed 's/-.*//')
+MAGISK_VERSION=$($magisk -c | awk '{ print $NF }' | sed -e 's/(\(.*\))/\1/')
 case $MAGISK_VERSION in
 '15.'[1-9]*) # Version 15.1 - 15.9
     MAGIMG=/sbin/.core/img
@@ -29,8 +29,11 @@ case $MAGISK_VERSION in
 '20.'[0-9a-zA-Z]*) # Version 20.x
 	MAGIMG=/data/adb/modules
 ;;
+'20'[0-9a-zA-Z]*|'20.'[0-9a-zA-Z]*)
+	MAGIMG=/data/adb/modules
+;;
 *)
-    echo "Unsupported Magisk version: $1"
+    echo "Unsupported Magisk version: $MAGISK_VERSION"
 	exit 1
 ;;
 esac
@@ -55,7 +58,7 @@ CONF=$(ls /sdcard/detach.txt || ls /sdcard/Detach.txt || ls /sdcard/DETACH.txt |
 
 # root check
 if ! ls /data/data 1>/dev/null 2>&1; then
-    echo -e $R"(!) You must run me as root\n(type su<enter>\nDetach\nor\nsu -c Detach -<option>)\n"$N
+    echo -e $R"(!) You must run me as root\n(type su<enter>\nDetach -<option>\nor\nsu -c Detach -<option>)\n"$N
     exit 1
 fi
 
@@ -73,6 +76,7 @@ fi
 case $1 in
 	-id|--instant-detach) ida;;
 	-l|--list-app) list;;
+	-trwp|rec|--recovery) twrp_compatibility;;
 	-a|--add-app) add;;
 	-r|--rem-app) rem;;
 	-k|--kill) k;;
@@ -90,7 +94,15 @@ esac
 # Instant Detach
 ida() {
 Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
-echo -e $C"\nDetach $Detach_version\n\nDetach work in progress..."$N; sleep 2;
+echo -e $C"\nDetach $Detach_version\n\nDetach work in progress..."$N; sleep 1;
+
+# Check for bad syntax in the Detach.txt file due to wrong config in some BETAs versions
+sed -n '5,40p' "$CONF" >> "$MAGMOD/SYN_CONF.txt"
+
+grep -q '\.' "$MAGMOD/SYN_CONF.txt"; if [ $? -eq 0 ]; then
+	echo -e $R"!- You "$CONF" file contain error(s), please use the default one to remove the errors and try again."$N
+	CONF_BAD=1
+fi
 
 instant_run=$MAGMOD/instant_run.sh
 instant_run_two=$MAGMOD/instant_run_two.sh
@@ -109,8 +121,8 @@ egrep "^[[:space:]]*./sqlite" "$SERVICESH" >> "$instant_run"
 
 echo -e "\n" >> "$instant_run"
 
-test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
-chmod 0644 "$MAGMOD/first_detach_result.txt"
+# test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
+# chmod 0644 "$MAGMOD/first_detach_result.txt"
 sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
 
 if [ "$ps_accounts" -gt "1" ]; then
@@ -177,14 +189,15 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 	fi
 	
 	for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/first_detach_result.txt"; do rm -f "$f"; done
-	echo -e $C"\nDatabase file fixed.\n\nDone\n"$N; sleep 2;
+	echo -e $C"\nDatabase file fixed.\n\nDone\n"$N; sleep 1;
 else		
 	echo -e $G"\nDone\n"$N
 fi
 
 am force-stop com.android.vending
 
-for r in "$instant_run_two" "$ACTAPPS" "$ACTAPPSBCK" "$FINAL" "$MAGMOD/first_detach_result.txt"; do rm -f "$r"; done
+# for r in "$instant_run_two" "$ACTAPPS" "$ACTAPPSBCK" "$FINAL" "$MAGMOD/first_detach_result.txt"; do rm -f "$r"; done
+rm -f "$MAGMOD/SYN_CONF.txt"
 
 # Selinux statut restoring
 case "$SELINUX_STATUT" in
@@ -209,6 +222,7 @@ sleep 1;
 }
 
 
+
 # Adding app
 add() {
 SERVICESH=$MAGMOD/service.sh
@@ -219,14 +233,20 @@ COMPATIBILITY=$MAGMOD/compatibility.txt
 Instant_sqlite=$MAGMOD/instant_sqlite.txt
 DL_CHECK=$MAGMOD/DL_check.txt
 
-for i in "$ACT_BASIC_APPS" "$ACT_CUST_APPS" "$Instant_sqlite"; do  [ ! -e "$i" ] && touch "$i" && chmod -R 0777 "$i"; done
+for i in "$ACT_BASIC_APPS" "$ACT_CUST_APPS" "$Instant_sqlite"; do  [ ! -e "$i" ] && touch "$i" && chmod -R 0644 "$i"; done
 
 echo -e $C"\n\nPlease write the application package name\nyou want to detach from automatic PS update\n\nPackage name: "$N
 read TOADD
+
 echo -e $C"\n\n '$TOADD' - Do you confirm ?"$N; sleep 2;
 read CONFIRMADD
 if [ $(cat "$SERVICESH" | grep "$TOADD" | sed 's/  #//') ]; then
 	echo -e $R"\n! The name that you have entered already exist in your list\n=> Type su -c Detach -a or su and Detach -a again to add another package name in your list.\n\n"$N; sleep 3;
+	exit
+fi
+
+if [ $(echo "$TOADD" | wc -l) -gt 1 ]; then
+	echo -e $R"\n! Please enter only one package name at a time."$N; sleep 3;
 	exit
 fi
 
@@ -237,7 +257,7 @@ case $CONFIRMADD in
 	touch "$DL_CHECK" && chmod 0777 "$DL_CHECK"
 	wget --no-check-certificate -T 5 -q -O "$MAGMOD/$TOADD.html" "https://play.google.com/store/apps/details?id=$TOADD&hl=en"
 	# Check for empty HTML page = 404 = Not Found = Custom apps don't exist on the Play Store
-	if [[ $(cat "$DL_CHECK" | grep '404' | awk '{ print $1 }') -eq "404"  ]]; then
+	if [[ $(cat "$DL_CHECK" | grep '404' | awk '{ print $1 }' 2>/dev/null) -eq "404" ]] 2>/dev/null; then
 		echo 'a2'
 		echo -e "\nWarning: The package name of the application you just\nentered does not exist in the Play Store.\n"
 		rm -f "$ACT_BASIC_APPS"
@@ -247,26 +267,33 @@ case $CONFIRMADD in
 		exit
 	fi
 	
-	# Exist in detach.txt or custom packages
-	# Get basic list
-	[ ! -e "$CONF" ] && echo "- Download Detach.txt file" && wget --no-check-certificate -T 5 -q -O "$MAGMOD/Detach.txt" https://github.com/xerta555/Detach-Files/raw/master/Detach.txt && chmod 0644 "/sdcard/Detach.txt"
+	
+	# Check if the app exist on the Play Store and if yes, get official app Name
+	wget --no-check-certificate -q -O "${MAGMOD}/$TOADD.html" "https://play.google.com/store/apps/details?id=${TOADD}&hl=en" --header "header: play.google.com" 2>&1 >> "$MAGMOD/$TOADD_DL_check.txt"
+	cat "$MAGMOD/$TOADD_DL_check.txt" | grep '404' | awk '{ print $1 }' > "$MAGMOD/$TOADD_DL_final_check.txt"
+	
+	if [ -s "$MAGMOD/$TOADD_DL_final_check.txt" ]; then
+		echo -e $R"\nApparently $TOADD don't exist on the Play Store or you don't have write the name correctly..."$N; sleep 2;
+		exit
+	else
+		grep 'AHFaub' "$MAGMOD/$TOADD.html" | tail -1 | cut -f1,2,3 -d'<' | sed 's/.*>//' | sed 's/(Trial)//' | sed 's/(Trial version)//' | sed 's/-.*//' | sed 's/:.*//' | sed 's/★.*//' | sed 's/ &amp.*//' | sed 's/\|.*//' | tr -d '\n' >> "$MAGMOD/$TOADD.txt"
+	fi
 	
 	
-	CONF=$(ls /sdcard/Detach.txt || ls /storage/emulated/0/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
+	# May to be a basic app... or custom packages
+	if grep -qs 'Gmail\|Google\|Google+ for G Suite\|Hangouts\|YouTube\|Gboard\|Contacts\|Phone\|Google Photos\|Clock\|Google Camera\|Google Duo\|Dropbox\|Pushbullet\|Google Calendar\|Google Keep\|Telegram\|SwiftKey Keyboard\|Google Translate\|Facebook\|Pandora\|Twitter\|Slack\|MEGA\|WhatsApp Messenger\|Google Voice\|Google Drive\|Netflix\|Pixel Launcher\|Wallpapers\|GoPro\|Google VR Services\|Google Play services\|Carrier Services' "$MAGMOD/$TOADD.txt"; then
+		CHECK_RESULT_BASICS=1
+	fi
 	
-	[ ! -e "$CONF" ] && echo -e "\n!- Unable to download Detach.txt file\n!- Exit.." && sleep 1 && exit
-	BASIC_CHECK=$(cat "$CONF" | tail -n +5 | sed 's/# Other applications.*//' | grep '[A-Za-z0-9]' | sed 's/#//')
-	
-	
-	if [ $(echo "$BASIC_CHECK" | grep -no "$TOADD" | sed 's/:.*//') ]; then
+	WEB_NAME=$(cat "$MAGMOD/$TOADD.txt")
+		
+	if [ "$CHECK_RESULT_BASICS" == 1 ]; then
 		# For basic
 		# Get line number of app to hide from basic list
-		BASIC_NUMBER=$(echo "$BASIC_CHECK" | grep -no "$TOADD"  | sed 's/:.*//')
+		BASIC_NUMBER=$(grep -no "$TOADD" "$CONF" | sed 's/:.*//')
 		echo -e "\n- Enable $TOADD in your Detach.txt file as Common app\n"; sleep 2;
-		sed -i -e "$BASIC_NUMBERs/# ${TOADD}/${TOADD}/" "$CONF"
-		# Get official app name from Play Store and write it in the service.sh file
-		BASIC_NAME_WEB=$(cat "$MAGMOD/$TOADD.html" | grep 'AHFaub' | tail -1 | cut -f1,2,3 -d'<' | sed 's/.*>//')
-		BASIC_NAME_LOCAL=$(awk "NR==$BASIC_NUMBERs" "$CONF")
+		sed -i -e "${BASIC_NUMBER}s/# ${TOADD}/${TOADD}/" "$CONF"
+		
 		# Grep each sqlite commands with apps titles (common apps)
 		sqlite_cmds_common=$(grep -no '# Custom Packages' "$SERVICESH" | sed 's/:.*//')
 		sqlite_cmds_final=$((sqlite_cmds_common-1))
@@ -291,11 +318,11 @@ case $CONFIRMADD in
 		sqlite_cmds_final=$((sqlite_cmds_common-1))
 		sqlite_cmds_cust=$(grep -n '# Multiple' "$SERVICESH" | sed 's/:.*//')
 		sqlite_cmds_final2=$((sqlite_cmds_cust-1))
-		CUST_NAME_WEB=$(cat "$MAGMOD/$TOADD.html" | grep 'AHFaub' | tail -1 | cut -f1,2,3 -d'<' | sed 's/.*>//' | sed 's/:.*//')
+		
 		sed "32,$sqlite_cmds_final!d;" "$SERVICESH" | grep '[a-zA-Z0-9]' >> "$ACT_BASIC_APPS"
 		sed "$sqlite_cmds_final,$sqlite_cmds_final2!d;" "$SERVICESH" | grep '[a-zA-Z0-9]' >> "$ACT_CUST_APPS"
 		echo "" >> "$ACT_CUST_APPS"
-		echo -e "\n	# $CUST_NAME_WEB\n	./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$TOADD'\";\n\n" >> "$ACT_CUST_APPS"
+		echo -e "\n	# $WEB_NAME\n	./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$TOADD'\";\n\n" >> "$ACT_CUST_APPS"
 		echo "" >> "$ACT_CUST_APPS"
 		sed -i -e '32,$d' "$SERVICESH"
 		cat "$ACT_BASIC_APPS" >> "$SERVICESH"
@@ -303,6 +330,8 @@ case $CONFIRMADD in
 		cat "$ACT_CUST_APPS" >> "$SERVICESH"
 		cat "$COMPATIBILITY" >> "$SERVICESH"
 		echo -e "\n\n# Exit\n	exit; fi\ndone &)\n" >> "$SERVICESH"
+		echo -e $G"\n- Enable $WEB_NAME in your $CONF file.\n"$N
+		echo -e "$TOADD" >> "$CONF"
 	fi
 		
 	# Instant Run
@@ -387,6 +416,7 @@ rm -f "$Instant_sqlite"
 rm -f "$MAGMOD/first_detach_result.txt"
 rm -f $MAGMOD/*.html
 rm -f "$MAGMOD/DL_check.txt"
+rm -f "$MAGMOD/$TOADD.txt"
 
 	# Selinux statut restoring
 case "$SELINUX_STATUT" in
@@ -542,23 +572,23 @@ case $SCHEDU in
 	1|Tasker|tasker|TASKER)
 		echo -e $P"\n\nYour choice: Tasker\n"$N
 		if [ $(pm list packages net.dinglisch.android.taskerm | sed "s/package://") == "net.dinglisch.android.taskerm" ]; then
-			echo -e $B"\nNext step require Busybox Magisk Module and active connexion (WIFI/Datas).\n"; sleep 2;$N
+			echo -e $C"\nNext step require Busybox Magisk Module and active connexion (WIFI/Datas).\n"$N; sleep 2;
 			bb
 			wget --no-check-certificate -T 5 -q -O "$MAGMOD/Auto_Detach_Tasker.prf.xml" https://github.com/xerta555/Detach-Files/raw/master/Auto_Detach_Tasker.prf.xml 2>/dev/null
 			
 			if [ ! -e "$MAGMOD/Auto_Detach_Tasker.prf.xml" ]; then
 				echo -e $R"Unable to download the necessary file!\nPlease check your connexion."$N
-				exit 0
+				exit
 			fi
 			
-			echo -e $B"\nEvery how many hours do you want to run the Detach script to be executed?\nJust type the number you want.\n\nFor info: 1 to 99 hours is supported by default.\n\n"$N
+			echo -e $C"\nEvery how many hours do you want to run the Detach script to be executed?\nJust type the number you want.\n\nFor info: 1 to 99 hours is supported by default.\n\n"$N
 			read TASKER_period
 			
-			TASKER_period=$(if $(echo $TASKER_period | grep -qs 'hour/|hours'); then TASKER_period=$(echo $TASKER_period | sed 's/hour//' | sed 's/hours//' | sed 's/HOUR//' | sed 's/HOURS//' 2>/dev/null); fi)
-			echo -e $B"\nYou have chosen: every $TASKER_period hours\n"$N
-			sed -i -e "13s/hour/$TASKER_period/" "$MAGMOD/Auto_Detach_Tasker.prf.xml"
+			TASKER_period_final=$(grep -Eo [0-9]+ <<<$TASKER_period)
+			echo -e $C"\nYou have chosen: every $TASKER_period_final hours\n"$N; sleep 2;
+			sed -i -e "13s/hour/$TASKER_period_final/" "$MAGMOD/Auto_Detach_Tasker.prf.xml"
 			cp -f $MAGMOD/Auto_Detach_Tasker.prf.xml /sdcard
-			echo -e "\nTasker profile file for your Tasker app is ready:\n\n/sdcard/Auto_Detach_Tasker.prf.xml\n\n=> Just import this file in your Tasker:\n- Longpress on 'PROFILES' tab.\n'- Import Profile'\n- Choose your storage icon on bottom right corner\n- Browse to your file\n- Confirm the import in Tasker app\n- Enjoy\n\n"
+			echo -e $G"\nTasker profile file for your Tasker app is ready:\n\n/sdcard/Auto_Detach_Tasker.prf.xml\n\n=> Just import this file in your Tasker:\n- Longpress on 'PROFILES' tab.\n'- Import Profile'\n- Choose your storage icon on bottom right corner\n- Browse to your file\n- Confirm the import in Tasker app\n- Enjoy\n\n"$N
 		else
 			echo $R"\n! => Apparently you don't have install Tasker application\n! => Do you want to install it?"$N; sleep 2;
 			read TASKER_INSTALL
@@ -857,149 +887,18 @@ bb() {
 BBPATH=$MAGIMG/busybox-ndk
 busybox_magisk=$(ls "$BBPATH/system/bin/busybox" || ls "$BBPATH/system/xbin/busybox" || ls /system/xbin/busybox || ls /system/bin/busybox || ls /system/sbin/busybox || ls /sbin/busybox) 2>/dev/null
 
+bb_ok() {
+echo -e $C"Compatibility check... ✓\n"$N; sleep 0.1;
+}
+
+bb_nok() {
+echo -e $C"Compatibility check... ×\n"$N; sleep 0.1;
+}
+
 if [ -z "$busybox_magisk" ]; then
-	echo -e $B"\n\nYou would not have installed the Busybox module a priori."$N $C"\nDo you want to install the module now?\n(Type yes or no)\n\n"$N
-	read bbox
-	case $bbox in
-		Y|y|Yes|yes|YES)
-				
-		mkdir -p /dev/tmp/Busybox-dl
-		test -d /dev/tmp/Busybox-dl && INSTALLER=/dev/tmp/Busybox-dl || echo -e $R"\n\nProblem:=> Unable to check your Busybox setup!!\nFix: Install it directly by Magisk Manager, in 'Downloads' tab.\n\n"$N && exit
-		echo -e $P"! \n\nNo Busybox Magisk module detected.\nOr you don't have the last version\n\nProcessing Busybox setup...\n"$N
-		echo -e $P"\n=====================================\n\nBusybox Installer Script\nPorted to works with Detach module by Rom\nAll credits to osm0sis@xda-developers\n\n=====================================\n\n"$N
-		
-		echo -e $P"\n- Downloading...\n"; sleep 2;
-		wget --no-check-certificate -T 5 -q -O "$INSTALLER/busybox-ndk.zip" https://codeload.github.com/Magisk-Modules-Repo/busybox-ndk/zip/master 2>/dev/null
-			
-		if [ ! -e "$INSTALLER/busybox-ndk.zip" ]; then
-			echo -e $R"\nUnable to download pre-requested Busybox module.\nDownload it yourself by Magisk Manager (in Download section).\n\n"$N
-			am start -n com.topjohnwu.magisk/a.c
-			exit 1
-		else
-		
-			ZIPFILE=$INSTALLER/busybox-ndk.zip
-
-			test -e /data/adb/magisk && adb=adb
-
-			dev=/dev
-			devtmp=/dev/tmp
-			test -e /data/adb/magisk/busybox && magiskbb=/data/adb/magisk/busybox
-			test "$magiskbb" && export PATH="$magiskbb:$PATH"
-
-			zipextract=busybox-ndk
-
-			test -f /system/build.prop && root=/system
-
-			choice=$(basename "$ZIPFILE")
-
-			action=installation
-			nolinks=1
-
-			echo -e $P"\n- Extracting files...\n"$N; sleep 2;
-
-			mkdir -p "$dev/tmp/$zipextract"
-
-			unzip -oj "$ZIPFILE" busybox-ndk-master/module.prop 'busybox-ndk-master/busybox*' -d "$devtmp/$zipextract"
-			chmod 0777 "$dev/tmp/$zipextract/*"
-
-			echo -e $P"\nInstalling...\n"$N; sleep 2;
-
-			abi=$(getprop ro.product.cpu.abi);
-			case $abi in
-				arm*|x86*|mips*) ;;
-				*) abi=$(getprop ro.product.cpu.abi);;
-			esac
-	
-			case $abi in
-				arm*|x86*|mips*) ;;
-				*) abi=$(getprop ro.product.cpu.abi $root/default.prop);;
-			esac
-			case $abi in
-				arm64*) arch=arm64;;
-				arm*) arch=arm;;
-				x86_64*) arch=x86_64;;
-				x86*) arch=x86;;
-				mips64*) arch=mips64;;
-				mips*) arch=mips;;
-				*) echo $R"Unknown architecture: $abi"$N; abort; exit 2;;
-			esac
-
-			echo -e $P"\nUsing architecture: $arch\n"$N; sleep 2;
-
-			modname=busybox-ndk
-
-			magisk=$BBPATH/system
-
-			target=$magisk/xbin
-		
-			echo -e $P"\nUsing path: $target\n"$N; sleep 2;
-
-			mkdir -p "$target"
-
-			TMPBUSYBOXDIR=$dev/tmp/busybox-ndk
-
-			cp -f "$TMPBUSYBOXDIR/busybox-$arch" "$target/busybox"
-			chown 0:0 "$target/busybox"
-			chmod 755 "$target/busybox"
-			cp -f "$TMPBUSYBOXDIR/module.prop" "$BBPATH"
-			touch "$BBPATH/auto_mount"
-			touch "$BBPATH/update"
-
-			echo -e $G"\nCleaning...\n"$N; sleep 2;
-
-			cleanup="$mnt$magisk/xbin $target"
-
-			for dir in $cleanup; do
-				cd "$dir"
-				for i in $(ls -al `find -type l` | $target/busybox awk '{ print $(NF-2) ":" $NF }'); do
-					case $(echo $i | $target/busybox cut -d: -f2) in
-						*busybox) list="$list $dir/$(echo $i | $target/busybox cut -d: -f1)";;
-					esac
-				done
-			done
-
-			echo $P"Creating symlinks..."$N; sleep 2;
-			sysbin="$(ls $root/bin)"
-			existbin="$(ls $imgmnt/busybox-ndk/system/bin 2>/dev/null)"
-			for applet in `$target/busybox --list`; do
-				case $target in
-					*/bin)
-						if [ "$(echo "$sysbin" | $target/busybox grep "^$applet$")" ]; then
-							if [ "$(echo "$existbin" | $target/busybox grep "^$applet$")" ]; then
-								"$target/busybox" ln -sf busybox "$applet"
-							fi
-						else
-							"$target/busybox" ln -sf busybox "$applet"
-						fi
-					;;
-					*) "$target/busybox" ln -sf busybox "$applet"
-					;;
-				esac
-			done
-	
-			test "$magisk" && chcon -hR 'u:object_r:system_file:s0' "$target"
-			rm -rf /dev/tmp
-				
-			echo -e $P"\nCheck module setup\n"$N; sleep 2;
-			
-			if [ -a "$target/awk" ]; then
-				echo -e $G"\n- Done!\n- Reboot your device to apply changes\n(Think to save your present works (docs, music players,webrbowsers,...)\n\n"$N; sleep 2;
-				exit
-			else
-				echo -e $R"\n!! Busybox setup problem detected.\n=> Please install the module directly with Magisk Manager\n ('Downloads' tab).\n"$N
-			exit 1
-			fi
-		fi
-		break
-		;;
-		N|n|No|no|NO)
-			echo -e $G"\nBusybox is installed\nNext...\n"$N; sleep 1;
-		;;
-		*)
-			echo $R"\n\nINVALID ENTRY, try again if you want\nExit now...\n"$N; sleep 2;
-			break
-		;;
-	esac
+	bb_nok
+else
+	bb_ok
 fi
 }
 
