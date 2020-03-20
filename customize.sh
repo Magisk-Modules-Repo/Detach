@@ -85,7 +85,7 @@ grep -q '\.' "$TMPDIR/SYN_CONF.txt"; if [ $? -eq 0 ]; then
 fi
 
 
-UP_SERVICESSH=/data/adb/modules_update/Detach/service.sh
+UP_SERVICESSH=$MODPATH/service.sh
 if [ -e "$UP_SERVICESSH" ] && test ! "$CONF_BAD"; then
 	CTSERVICESH=$(awk 'END{print NR}' $UP_SERVICESSH)
 	if [ "$CTSERVICESH" -gt "32" ]; then
@@ -154,14 +154,21 @@ sed -n '/# Other applications/,$p' "$CONF" | sed '1d' > "$COMPARE_CUSTOM"
 # Check if there is/are duplicate(s) in the Common=Main apps
 COMP_WRONG_M=$(awk 'NR==FNR{a[$1]++;next} a[$1] ' "$COMPARE_MAIN" "$COMPARE_CUSTOM")
 
-# If there is an error in the Custom apps
+# If there is an error in the custom apps
 COMP_WRONG_C=$(awk 'NR==FNR{a[$1]++;next} a[$1] ' "$COMPARE_CUSTOM" "$COMPARE_MAIN")
 if [ "$COMP_WRONG_M" ]; then
-	ui_print "- Be carreful! $line already exist in the common apps list"; sleep 1;
+	ui_print "- Be carreful! Theses following apps already exist in the common apps list"; sleep 1;
+	printf '%s\n' "$COMP_WRONG_C" | while IFS= read -r line
+		do ui_print "- $line"
+	done
 	CH_DUPLICATE=0
 fi
+
 if [ "$COMP_WRONG_C" ]; then
-	ui_print "- Be carreful! $line already exist in the custom apps list"; sleep 1;
+	ui_print "- Be carreful! Theses following apps already exist in the custom apps list"; sleep 1;
+	printf '%s\n' "$COMP_WRONG_C" | while IFS= read -r line
+		do ui_print "- $line"
+	done
 	CH_DUPLICATE=0
 fi
 # ------------------------------------------------------------------------------------
@@ -632,11 +639,8 @@ test -e "$SIMPLE" && simple_mode_pre_request
 CHECK=$(cat "$CONF" | tail -n +5 | sed -n '/# Other applications/q;p' | grep -v -e "#.*" | grep '[A-Za-z0-9]')
 
 # Check if basics apps in Detach.txt file are ready or not
-CHECK_BAS=$(cat "$CONF" | tail -n +5 | sed -n '/# Other applications/q;p' | grep '[A-Za-z0-9]')
-if [ "$(echo "$CHECK_BAS" | grep "\.")" ]; then
-	unset CHECK
-	echo -e "!- WARNING: You basic applications list contain '.' symbol, delete them and try again."
-fi
+test "$CONF_BAD" && abort "!- WARNING: You basic applications list contain '.' symbol, delete them and try again."
+
 
 CHECK_OTHER=$(sed -n 45p "$CONF")
 RIGHT_OTHER="# Other applications"
@@ -644,12 +648,13 @@ if [ "$CHECK_OTHER" != "$RIGHT_OTHER" ]; then
 	unset CHECK_OTHER
 fi
 
+
 CHECK_PACKAGES=$(cat "$CONF" | tail -n +46 | grep '[0-9A-Za-z]')
 
 # Checks for Detach.txt file
 simple_mode_checks
 
-[[ "$CH_ONLINE" == "1" || "$CH_DUPLICATE" == "0" ]] && exit
+[[ "$CH_DUPLICATE" == "0" ]] && abort
 
 
 
