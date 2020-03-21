@@ -211,14 +211,23 @@ esac
 
 # List hided apps
 list() {
-apps_list=$(tail -n +32 "$SERVICESH" | grep -e "# [A-Z]" | sed 's/# Custom Packages//' | sed 's/# Multiple.*//' | sed '$ d' | sed 's/[[:blank:]]*//' | grep "# [A-Za-z0-9]" | sed 's/# //')
+apps_list_basic=$(tail -n +32 "$SERVICESH" | grep -e "# [A-Z]" | sed 's/# Custom Packages//' | sed 's/# Multiple.*//' | sed '$ d' | sed 's/[[:blank:]]*//' | grep "# [A-Za-z0-9]" | sed 's/# //')
+apps_list_cust=$(sed -n '/# Custom Packages/,$p' $SERVICESH | egrep "^[[:space:]]*./sqlite" | sed "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" | sed "s/'\";//" | sed 's/[[:space:]]//')
+
+echo "$apps_list_basic" >> "$MAGMOD/apps_lists.txt"
+echo "$apps_list_cust" >> "$MAGMOD/apps_lists.txt"
+
+
+FINAL_apps_list=$(awk '{ print }' "$MAGMOD/apps_lists.txt")
 
 echo -e "\n\nHidden app(s):\n$divider\n"
-printf '%s\n' "$apps_list" | while IFS= read -r line
+printf '%s\n' "$FINAL_apps_list" | while IFS= read -r line
 	do echo "- $line"
 done
 echo -e "\n$divider\n"
 sleep 1;
+
+rm -f "$MAGMOD/apps_lists.txt"
 }
 
 
