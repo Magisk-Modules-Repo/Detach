@@ -62,14 +62,14 @@ NOTE BEFORE INSTALL: DON'T FLASH THIS MODULE IN TWRP. USE MAGISK MANAGER ONLY TO
 ------------------------------------------------------------------------------------
 
 :bulb: <b>Terminal features:</b>
-- Instant detaching: instantly detaching your favorites app(s)
+- Instant detaching: instantly detach your favorites app(s)
 - List detached app(s): list all your app(s) wich are detached from the Play Store
 - Add app(s): detach new app(s)
 - Remove app(s): remove detach feature for detached app(s)
-- Kill: killing Play Store application
+- Kill: kill Play Store application
 - Clear Play Store data: clear the Play Store's app data
 - Task scheduler: Several possibilities to automate the detachment of your application(s) from the Play Store
-- Silent mode: enable or disable the silent mode, to have for a cleaner and less cluttered display in your terminal
+- Silent mode: enable or disable the silent mode, to have a cleaner and less cluttered display in your terminal
 - Busybox compatibility check and Magisk module auto-installer
 - Help: a help menu with all possible commands explained in details
 
@@ -99,7 +99,7 @@ NOTE BEFORE INSTALL: DON'T FLASH THIS MODULE IN TWRP. USE MAGISK MANAGER ONLY TO
 - Write the app(s) package(s) name(s) on the next line.
 - Don't forget to press your ENTER key when you will have finish to write your custom packages names.
 <br />
-<h3><b>An exemple:</b></h3>
+<h3><b>An example:</b></h3>
 <br />
 <img src="https://i.ibb.co/gTNb8hW/photo-2019-10-17-19-04-41.jpg" alt="Screenshot-20190815-170841.png" height="1200" width="600"><br />
 <br />
@@ -107,7 +107,7 @@ NOTE BEFORE INSTALL: DON'T FLASH THIS MODULE IN TWRP. USE MAGISK MANAGER ONLY TO
 
 ### :grey_question: <b>Common Question and Answers:</b>
 
-#### Q: A problem ?
+#### Q: I have a problem, where do I report it?
 
 A: Ask on Telegram group or/and on XDA OP (scroll up)
 
@@ -115,11 +115,11 @@ A: Ask on Telegram group or/and on XDA OP (scroll up)
 
 A: After you will have reboot your device.
 
-#### Q: And the `detach.custom` file so?
+#### Q: And the `detach.custom` file, what happened?
 
 A: Starting from version `4.X`, there is no longer need of this file, you just have to use the `Detach.txt` file.
 
-#### Q: Where to find an app's package name for an another app (custom app) ?
+#### Q: Where to find an app's package name for an other app (custom app) ?
 
 A: App's package name is in the middle of the two texts framed in grey<br />
 `https://play.google.com/store/apps/details?id=`com.package.name`&hl=en`
@@ -165,4 +165,4 @@ A: You can schedule the `su -c detach -id` command
 
 ------------------------------------------------------------------------------------
 
-Here we go ? :relaxed:
+Ready to go? :relaxed:
