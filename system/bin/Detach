@@ -32,6 +32,9 @@ case $MAGISK_VERSION in
 '20'[0-9a-zA-Z]*|'20.'[0-9a-zA-Z]*)
 	MAGIMG=/data/adb/modules
 ;;
+'21'[0-9a-zA-Z]*|'21.'[0-9a-zA-Z]*)
+	MAGIMG=/data/adb/modules
+;;
 *)
     echo "Unsupported Magisk version: $MAGISK_VERSION"
 	exit 1
