@@ -133,7 +133,7 @@ if [ "$ps_accounts" -gt "1" ]; then
 	for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" >> "$instant_run_two"; done
 	sed -i -e 's/.\t\/sqlite/.\/sqlite/' "$instant_run_two"
 	sed -i -e 's/..\/sqlite/.\/sqlite/' "$instant_run_two"
-	sed -i -e "s/SQLITE=\$MODDIR.\/sqlite//" "$instant_run_two"
+	sed -i -e "s/SQLITE=\$MAGMOD.\/sqlite//" "$instant_run_two"
 	echo -e '\n' >> "$instant_run_two"
 	
 	sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
