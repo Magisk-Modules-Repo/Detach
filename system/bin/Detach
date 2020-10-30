@@ -130,7 +130,7 @@ if [ "$ps_accounts" -gt "1" ]; then
 	chmod 0644 "$instant_run_two"
 	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGIMG/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" > "$instant_run_two"
 	am force-stop com.android.vending
-	for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" > "$instant_run_two"; done
+	for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" >> "$instant_run_two"; done
 	sed -i -e 's/.\t\/sqlite/.\/sqlite/' "$instant_run_two"
 	sed -i -e 's/..\/sqlite/.\/sqlite/' "$instant_run_two"
 	sed -i -e "s/SQLITE=\$MODDIR.\/sqlite//" "$instant_run_two"
