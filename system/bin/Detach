@@ -5,38 +5,7 @@
 
 menu() {
 # Initial stuff
-magisk=$(ls /data/adb/magisk/magisk || ls /sbin/magisk) 2>/dev/null;
-MAGISK_VERSION=$($magisk -c | awk '{ print $NF }' | sed -e 's/(\(.*\))/\1/')
-case $MAGISK_VERSION in
-'15.'[1-9]*) # Version 15.1 - 15.9
-    MAGIMG=/sbin/.core/img
-;;
-'16.'[1-9]*) # Version 16.1 - 16.9
-    MAGIMG=/sbin/.core/img
-;;
-'17.'[1-3]*) # Version 17.1 - 17.3
-    MAGIMG=/sbin/.core/img
-;;
-'17.'[4-9]*) # Version 17.4 - 17.9
-    MAGIMG=/sbin/.magisk/img
-;;
-'18.'[0-9]*) # Version 18.x
-    MAGIMG=/data/adb/modules
-;;
-'19.'[0-9a-zA-Z]*) # All versions 19
-	MAGIMG=/data/adb/modules
-;;
-'20.'[0-9a-zA-Z]*) # Version 20.x
-	MAGIMG=/data/adb/modules
-;;
-'20'[0-9a-zA-Z]*|'20.'[0-9a-zA-Z]*)
-	MAGIMG=/data/adb/modules
-;;
-*)
-    echo "Unsupported Magisk version: $MAGISK_VERSION"
-	exit 1
-;;
-esac
+MAGIMG=/data/adb/modules
 
 # Colors
 BL='\e[01;90m' > /dev/null 2>&1; # Black
