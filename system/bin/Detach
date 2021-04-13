@@ -639,13 +639,13 @@ case $SCHEDU in
 	;;
 	
 	2|cron|crond|CRON|COND|Cron|Crond)
-		echo -e $P"\n\nYour choice: Crond\n"$N
-		if [ -e /system/bin/crond ] || [ -e /system/sbin/crond ] || [ -e /system/xbin/crond ] || [ -e /sbin/crond ]; then
-			
-			echo -e $B"\nPlease select your desired crond schedule.\n1 for 30 minutes interval.\n2 for 1 hour interval.\n3 your choice.\nMake sure to check your input before entering (* * * *).\nFor help visit,\nhttps://crontab.guru\n\n4 to view current schedule (raw).\n5 to delete existing crond schedule.\n6 to exit. \n\n"$N
+		
+		if  [ -e /system/bin/crond ] || [ -e /system/sbin/crond ] || [ -e /system/xbin/crond ] || [ -e /sbin/crond ]; then
+					
+			echo -e $P"\n\nYour choice: Crond\n"$N
+			echo -e $B"\nPlease select your desired crond schedule.\n1 for 30 minutes interval.\n2 for 1 hour interval.\n3 your choice.\nMake sure to check your input before entering (* * * *).\nFor help visit,\nhttps://crontab.guru\n\n4 to view current schedule (raw).\n5 to delete existing crond schedule.\n6 to exit.\n\nNow just make your choice..\n(1, 2, 3, 4,...)\n"$N
 			#echo -e $B"\nPlease enter your full crond command below.\nFormats for times: Minute (0-59) SPACE Hour (0-23) SPACE Day of mount (1-31) SPACE Month (1-12) SPACE Day of Week (0-6) (For Sunday=0 or 7)\nCommand exemple for every 2 hours:\ncrond 0 */2 * * * su -c detach -id\n\n"$N
 			read crond_entry
-			
 			case $crond_entry in
 				1|30|30M|30m|30min)
 					echo -e $C"Enable log? Y/N "$N
@@ -744,7 +744,9 @@ case $SCHEDU in
 				exit 0
 				;;
 			esac
-			
+						
+		else
+			echo -e $R"\nBusybox not found in your system!\nPlease install Busybox module to continue..."$N
 		fi
 	;;
 	
