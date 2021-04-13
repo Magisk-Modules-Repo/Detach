@@ -19,9 +19,23 @@ W='\e[01;97m' > /dev/null 2>&1; # White
 LG='\e[01;37m' > /dev/null 2>&1; # Light Gray
 N='\e[0m' > /dev/null 2>&1; # Null
 
+#Detach Directory
 MAGMOD=$MAGIMG/Detach
+#Boot service directory
 SERVICESH=$MAGMOD/service.sh
 SILENT=$MAGMOD/silent
+
+#crond schedule file
+cronsfile=$MAGMOD/crons/root
+cronsDir=$MAGMOD/crons
+
+#log file location
+if [ -d "/storage/emulated/0" ] 
+then
+    LogFile=/storage/emulated/0/cronlogs.txt
+else
+    LogFile=/sdcard/cronlogs.txt
+fi
 
 CONF=$(ls /sdcard/detach.txt || ls /sdcard/Detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 
@@ -31,7 +45,6 @@ if ! ls /data/data 1>/dev/null 2>&1; then
     exit 1
 fi
 
-bb
 
 # The selinux state need to be in 'Permissive' mode, because this script use the 'am' shell command under Android 8 and higher because of it's selinux rules.
 # On Android 8 and higher if the selinux status is in 'Enforcing' mode, the selinux rules don't allow/prevent apps from killing/stopping other process through am command.
@@ -41,6 +54,11 @@ if [ "$SELINUX_STATUT" = "Enforcing" ]; then
 	setenforce 0
 fi
 
+
+Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
+echo -e $C"\nDetach $Detach_version\n\n"$N; sleep 1;
+
+bb
 
 case $1 in
 	-id|--instant-detach) ida;;
@@ -63,7 +81,7 @@ esac
 # Instant Detach
 ida() {
 Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
-echo -e $C"\nDetach $Detach_version\n\nDetach work in progress..."$N; sleep 1;
+echo -e $C"\nDetach $Detach_version\n\nDetach work in progress..."$N
 
 # Check for bad syntax in the Detach.txt file due to wrong config in some BETAs versions
 sed -n '5,40p' "$CONF" >> "$MAGMOD/SYN_CONF.txt"
@@ -99,19 +117,20 @@ if [ "$ps_accounts" -gt "1" ]; then
 	chmod 0644 "$instant_run_two"
 	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGIMG/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" > "$instant_run_two"
 	am force-stop com.android.vending
-	for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" >> "$instant_run_two"; done
+	for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" > "$instant_run_two"; done
 	sed -i -e 's/.\t\/sqlite/.\/sqlite/' "$instant_run_two"
 	sed -i -e 's/..\/sqlite/.\/sqlite/' "$instant_run_two"
-	sed -i -e "s/SQLITE=\$MAGMOD.\/sqlite//" "$instant_run_two"
+	sed -i -e "s/SQLITE=\$MODDIR.\/sqlite//" "$instant_run_two"
 	echo -e '\n' >> "$instant_run_two"
 	
 	sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
 fi
 
+cp -f "$instant_run" /sdcard
 	
 wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
 if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
-	[ -e "$MAGMOD/silent" ] || echo -e $C"\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"$N; sleep 2;
+	[ -e "$MAGMOD/silent" ] || echo -e $C"\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"$N
 	
 	ACTAPPS=$MAGMOD/actapps.txt
 	ACTAPPSBCK=$MAGMOD/actapps.bak
@@ -121,9 +140,9 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 	
 	PLAY_DB_DIR=/data/data/com.android.vending/databases
 	
-	awk '$1 == "./sqlite" { print; x++ } END { print x, "total matches" }' "$SERVICESH" | sed '$ d' | tr -d '\t ' >> "$ACTAPPS"
+	awk '$1 == "./sqlite" { print; x++ } END { print x, "total matches" }' "$SERVICESH" | sed '$ d' >> "$ACTAPPS"
 	sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
-	sed -i -e '1d' "$ACTAPPS"
+	# sed -i -e '1d' "$ACTAPPS"
 	sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
 		
 	cp -f "$ACTAPPS" "$ACTAPPSBCK"
@@ -158,14 +177,14 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 	fi
 	
 	for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/first_detach_result.txt"; do rm -f "$f"; done
-	echo -e $C"\nDatabase file fixed.\n\nDone\n"$N; sleep 1;
+	echo -e $C"\nDatabase file fixed.\n\nDone\n"$N
 else		
 	echo -e $G"\nDone\n"$N
 fi
 
 am force-stop com.android.vending
 
-# for r in "$instant_run_two" "$ACTAPPS" "$ACTAPPSBCK" "$FINAL" "$MAGMOD/first_detach_result.txt"; do rm -f "$r"; done
+ for r in "$instant_run_two" "$ACTAPPS" "$ACTAPPSBCK" "$FINAL" "$MAGMOD/first_detach_result.txt"; do rm -f "$r"; done
 rm -f "$MAGMOD/SYN_CONF.txt"
 
 # Selinux statut restoring
@@ -194,7 +213,6 @@ printf '%s\n' "$FINAL_apps_list" | while IFS= read -r line
 	do echo "- $line"
 done
 echo -e "\n$divider\n"
-sleep 1;
 
 rm -f "$MAGMOD/apps_lists.txt"
 }
@@ -230,7 +248,7 @@ fi
 
 case $CONFIRMADD in
 	Y|y|Yes|yes|YES)
-	echo -e $G"\nCheck if $TOADD exist on the Play Store..."$N; sleep 2;
+	echo -e $G"\nCheck if $TOADD exist on the Play Store..."$N; sleep 1;
 	# Check if user input exist on Play Store \(WIFI and/or LTE are require\)
 	touch "$DL_CHECK" && chmod 0777 "$DL_CHECK"
 	wget --no-check-certificate -T 5 -q -O "$MAGMOD/$TOADD.html" "https://play.google.com/store/apps/details?id=$TOADD&hl=en"
@@ -311,6 +329,13 @@ case $CONFIRMADD in
 		echo -e $G"\n- Enable $WEB_NAME in your $CONF file.\n"$N
 		echo -e "$TOADD" >> "$CONF"
 	fi
+	
+	# Removing any existant backup(s) of specified app
+	ls -A1 "$MODPATH/Backup_${TOADD}*.txt" 2>/dev/null | xargs rm -f
+	
+	# Backup DB file specific datas before magic things..
+	$MAGMOD/sqlite "$PS_DATA_PATH" "SELECT * FROM ownership WHERE doc_id = '$line'" >> "$TMPDIR/Backup_$TOADD_${date +"%Y_%m_%d"}.txt"
+		
 		
 	# Instant Run
 	instant_run=$MAGMOD/instant_run.sh
@@ -353,7 +378,7 @@ case $CONFIRMADD in
 	wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
 			
 	if grep "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
-		[ -e "$MAGMOD/silent" ] || echo -e $C"\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"$N; sleep 2;
+		[ -e "$MAGMOD/silent" ] || echo -e $C"\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"$N; sleep 1;
 		ACTAPPS=$MAGMOD/actapps.txt
 		ACTAPPSBCK=$MAGMOD/actapps.bak
 		FINAL=$MAGMOD/final.sh
@@ -376,7 +401,7 @@ case $CONFIRMADD in
 		echo -e $G"\nDone\n"$N
 	fi
 	
-	for f in "$instant_run" "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/second_detach_result.txt" "$instant_run_two"; do rm -f "$f"; done
+	for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/second_detach_result.txt" "$instant_run_two"; do rm -f "$f"; done
 ;;
 	N|n|No|no|NO) echo $R"\nCanceled\n"$N
 	exit 0
@@ -385,6 +410,8 @@ case $CONFIRMADD in
 	*) echo $R"\n\nINVALID ENTRY, try again.\n"$N
 ;;
 esac
+
+cp -f "$instant_run" /sdcard
 
 	
 rm -f "$ACT_BASIC_APPS"
@@ -419,6 +446,7 @@ chmod 0644 "$ACTAPPSRD"
 touch "$ACTAPPS"
 chmod 0644 "$ACTAPPS"
 
+PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
 
 egrep "^[[:space:]]*./sqlite" "$SERVICESH" >> "$ACTAPPS"
 sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
@@ -447,7 +475,7 @@ if [ $(echo "$APPLINE2REM" | wc -l) -gt "1" ]; then
 fi
 
 APPTOREMPREVIOUS=$((APPLINENUM-1))
-echo $B"\n\n'$APPLINE2REM' is ready to be deleted.\n\n"$N; sleep 2;
+echo $B"\n\n'$APPLINE2REM' is ready to be deleted.\n\n"$N; sleep 1;
 
 echo -e $B"\n=> Do you confirm ?\n(yes or no)\n"$N
 read CONFTODEL
@@ -457,6 +485,36 @@ case $CONFTODEL in
 			sed -i -e "${APPLINENUM}d" "$SERVICESH"
 			sed -i -e "${APPTOREMPREVIOUS}d" "$SERVICESH"
 			echo -e $G"\n$APPLINE2REM has been deleted\n"$N; sleep 1;
+			
+			# Import data (extracted from DB file during module setup) to DB file
+			# Check
+			echo -e $C"\n\n=> Searching for backups...\n\n"$N; sleep 1;
+			ls | grep "^Backup_${APPLINE2REM}_*\.csv$" "$MAGMOD" >> "$MODPATH/DB_BCK_CHECK.txt"
+			if [ -z "$DB_BCK_CHECK"  ]; then
+				echo -e $R"\n\n ! No backup found, your app will appear again in you Play Store app when it will refresh it's database file.\n\n"$N; sleep 3; exit ;
+			fi
+			if [ $(echo "$APPLINE2REM" | wc -l) -ge "2" ]; then
+				echo -e $R"\n\n=> Removing old backup(s)...\n\n"$N; sleep 2;
+				
+				# Search all backup(s) for the specific app and delete it/them
+				ls -A1 "$MODPATH/Backup_$APPLINE2REM*.csv" | sed -n '1!p' | xargs rm -f
+			fi
+			echo -e $C"\n\n=> Restoring the last backup...\n\n"$N; sleep 1;
+			BCK_TO_RESTORE=$(ls -A1 "$MODPATH/Backup_$APPLINE2REM*.csv")
+			
+			# Restore backup data to DB File
+			tableName=$(head -n 1 /sdcard/a.csv | sed 's/,/;/g')
+			DATAS_DB=$("$MODPATH/sqlite" /sdcard/library.db "SELECT * FROM ownership WHERE doc_id = '$APPLINE2REM';")
+			
+			sed -i -e '1d' "$BCK_TO_RESTORE"
+			(echo .separator ";"; echo .import "$BCK_TO_RESTORE" ownership) | "$MODPATH/sqlite" "$PS_DATA_PATH"
+
+			for name in "$tableName";
+				do if [ $($echo "$DATAS_DB") -eq "$APPLINE2REM" ]; then
+					"$MODPATH/sqlite" /sdcard/library.db "UPDATE ownership SET "$name" = null WHERE "$name" = '';"
+				fi
+			done
+			
 	;;
 	N|n|No|no|NO|Na|na) 
 			echo $R"\nCanceled\n"$N
@@ -485,8 +543,7 @@ esac
 
 # Kill PS app
 k() {
-	[ -e "$MAGMOD/silent" ] || echo -e $B"\nForce closing the Play Store app...\n"$N
-	sleep 2
+	[ -e "$MAGMOD/silent" ] || echo -e $B"\nForce closing the Play Store app...\n"$N; sleep 1;
 	am force-stop com.android.vending
 	[ -e "$MAGMOD/silent" ] || echo -e $G"\nPS app has been force-stop.\n"$N
 	
@@ -502,7 +559,7 @@ esac
 
 # Clear PS datas
 c() {
-	[ -e "$MAGMOD/silent" ] || echo -e $B"\nWorks in progress...\n"$N; sleep 2;
+	[ -e "$MAGMOD/silent" ] || echo -e $B"\nWorks in progress...\n"$N; sleep 1;
 	pm clear com.android.vending
 	[ -e "$MAGMOD/silent" ] || echo -e $G"\nDone\n"$N
 	
@@ -522,14 +579,14 @@ cat <<SCHEDULE
 	
 	
 	
-			=== Detach scheduling ===
-			       ~ By Rom ~
+	=== Detach scheduling ===
+			~ By Rom ~
 	
 => Here, many way to scheduling the detach works are possible.
 => Just choose one of them with the corresponding number.
 	
 	1 - Tasker (Market application)
-	2 - Crond (Linux command)
+	2 - Crond (Linux command, RECOMMENDED)
 	3 - DJS (Magisk module made by VR25@xda-devlopers.com)
 	4 - Droid Automation (Market application)
 	5 - Termux (Termux:Boot script mode)
@@ -550,7 +607,7 @@ case $SCHEDU in
 	1|Tasker|tasker|TASKER)
 		echo -e $P"\n\nYour choice: Tasker\n"$N
 		if [ $(pm list packages net.dinglisch.android.taskerm | sed "s/package://") == "net.dinglisch.android.taskerm" ]; then
-			echo -e $C"\nNext step require Busybox Magisk Module and active connexion (WIFI/Datas).\n"$N; sleep 2;
+			echo -e $C"\nNext step require Busybox Magisk Module and an active connexion (WIFI/Datas).\n"$N; sleep 2;
 			bb
 			wget --no-check-certificate -T 5 -q -O "$MAGMOD/Auto_Detach_Tasker.prf.xml" https://github.com/xerta555/Detach-Files/raw/master/Auto_Detach_Tasker.prf.xml 2>/dev/null
 			
@@ -584,9 +641,108 @@ case $SCHEDU in
 	2|cron|crond|CRON|COND|Cron|Crond)
 		echo -e $P"\n\nYour choice: Crond\n"$N
 		if [ -e /system/bin/crond ] || [ -e /system/sbin/crond ] || [ -e /system/xbin/crond ] || [ -e /sbin/crond ]; then
-			echo -e $B"\nPlease enter your full crond command below.\nFormats for times: Minute (0-59) SPACE Hour (0-23) SPACE Day of mount (1-31) SPACE Month (1-12) SPACE Day of Week (0-6) (For Sunday=0 or 7)\nCommand exemple for every 2 hours:\ncrond 0 */2 * * * su -c detach -id\n\n"$N
+			
+			echo -e $B"\nPlease select your desired crond schedule.\n1 for 30 minutes interval.\n2 for 1 hour interval.\n3 your choice.\nMake sure to check your input before entering (* * * *).\nFor help visit,\nhttps://crontab.guru\n\n4 to view current schedule (raw).\n5 to delete existing crond schedule.\n6 to exit. \n\n"$N
+			#echo -e $B"\nPlease enter your full crond command below.\nFormats for times: Minute (0-59) SPACE Hour (0-23) SPACE Day of mount (1-31) SPACE Month (1-12) SPACE Day of Week (0-6) (For Sunday=0 or 7)\nCommand exemple for every 2 hours:\ncrond 0 */2 * * * su -c detach -id\n\n"$N
 			read crond_entry
-			$crond_entry
+			
+			case $crond_entry in
+				1|30|30M|30m|30min)
+					echo -e $C"Enable log? Y/N "$N
+					read TASKER_INSTALL
+					case $TASKER_INSTALL in
+						
+						Y|y|Yes|yes|YES)
+						
+						#Entry With log
+						WriteSchedule "0,30 * * * *" "-L $LogFile"
+						echo -e "Log will be saved at\n$LogFile\n"
+						;;
+						N|n|No|no|NO)
+						#entry without log
+						WriteSchedule "0,30 * * * *"
+						;;
+					esac
+	
+				;;
+				2|1hr|1hour|60|60min)
+				
+					echo -e $C"Enable log? Y/N "$N
+					read TASKER_INSTALL
+					case $TASKER_INSTALL in
+						
+						Y|y|Yes|yes|YES)
+						
+						#Entry With log
+						WriteSchedule "0 * * * *" "-L $LogFile"
+						echo -e "Log will be saved at\n$LogFile\n"
+						;;
+						N|n|No|no|NO)
+						#entry without log
+						WriteSchedule "0 * * * *"
+						;;
+					esac
+					
+				;;
+				3|Custom|Choice|custom|choice)
+				
+					echo -e $C"Enable log? Y/N "$N
+					read TASKER_INSTALL
+					case $TASKER_INSTALL in
+						
+						Y|y|Yes|yes|YES)
+						
+						#Entry With log
+						WriteSchedule "$crond_entry" "-L $LogFile"
+						echo -e "Log will be saved at\n$LogFile\n"
+						;;
+						N|n|No|no|NO)
+						#entry without log
+						WriteSchedule "$crond_entry"
+						;;
+					esac
+				
+				;;
+				4|view|View)
+					if [ -f "$cronsfile" ]; then
+						
+					#remove schedule entry from service file
+						cat "$cronsfile"
+					else
+						echo -e "No schedule found."
+					fi
+				
+				;;
+				5|Del|del|delete|Delete)
+					echo $R"\nThis will delete current schedule if present!\nYes or No?\n"$N; sleep 1;
+					read TASKER_INSTALL
+					case $TASKER_INSTALL in
+						
+						Y|y|Yes|yes|YES)
+						if [ -f "$cronsfile" ]; then
+						
+							#remove schedule entry from service file
+							sed -i -e '/crond -b -c/d' "$SERVICESH"
+							rm -rf "$cronsfile"
+							rm -rf "$LogFile"
+							
+							echo -e $Y"\nDone.\n\nRebooting once is recommended."$N
+						else
+							echo -e "No schedule found."
+						fi
+													
+						;;
+						N|n|No|no|NO)
+						exit 0
+						;;
+					esac
+				;;
+				6|Quit|quit|QUIT|EXIT|Exit|e)
+				
+				exit 0
+				;;
+			esac
+			
 		fi
 	;;
 	
@@ -644,7 +800,7 @@ case $SCHEDU in
 		
 		test -d /data/data/com.wakdev.droidautomation.free/files/profiles/automation/ || mkdir -p /data/data/com.wakdev.droidautomation.free/files/profiles/automation/
 		
-		test -e /sdcard/Droid_Automation_Detach.json | rm -f /sdcard/Droid_Automation_Detach.json
+		test -e /sdcard/Droid_Automation_Detach.json || rm -f /sdcard/Droid_Automation_Detach.json
 		
 		echo "{\"automation.profile.name\":\"Droid Automation Detach\",\"automation.profile.enabled\":true,\"automation.profile.triggers.length\":1,\"automation.profile.triggers.data\":[{\"triggers.fields\":{\"field3\":\"${DA3}\",\"field1\":\"${DA1}\",\"field2\":\"${DA2}\"},\"triggers.config\":{\"itemUpdate\":\"true\",\"itemTriggerExtra\":null,\"requestType\":\"38\",\"itemTrigger\":\"18367\",\"itemHash\":\"833cf518-c11b-411c-a412-98900f11705a\",\"itemDescription\":\"Déclencher toutes les : 05h.06m.07s.\"}}],\"automation.profile.tasks.length\":1,\"automation.profile.tasks.data\":[{\"task.fields\":{\"field1\":\"su -c detach -id\"},\"task.config\":{\"itemUpdate\":\"false\",\"requestType\":\"6666\",\"itemTask\":\"su -c detach -id\",\"itemDescription\":\"su -c detach -id\",\"itemHash\":\"be7b37d9-1573-45f5-b20c-42df0a90be6a\"}}]}" >> /sdcard/Droid_Automation_Detach.json
 		
@@ -685,11 +841,11 @@ case $SCHEDU in
 		echo -e "\nDone !\n\n-Make sure DJS module is enabled in your Magisk Manager\nReboot your device\n- Profit!\n\n"			
 	;;
 	0|"My tool"|Mine)
-		if [ ! -e "$MAGMOD/instant_run.sh" ]; then
+		if [ ! -e "/sdcard/instant_run.sh" ]; then
 			echo -e $P"\nWarning: Before scheduling, you must have run the command at least once time:\nsu -c detach -id\n\nThen you can use the schedule feature of your choice freely.\n\nRemember that to update the list of your detached applications, you must flash the module again via TWRP or Magisk Manager (prefer Magisk Manager preferably, but TWRP remains compatible with the module in the absolute).\n\n"; sleep 2;$N
 		else
 			echo -e $G"\nCommand (best method - require root access):\n su -c Detach -id\n\n"$N; sleep 1;
-			echo -e $Y"\n\nPath of the script file: $MAGMOD/instant_run.sh\n"; sleep 2;$N
+			echo -e $Y"\n\nPath of the script file: /sdcard/instant_run.sh\n"; sleep 2;$N
 		fi
 	;;
 	99|Quit|quit|QUIT|EXIT|Exit|e)
@@ -706,22 +862,53 @@ case "$SELINUX_STATUT" in
 esac
 }
 
+#function to write crond schedule in file
+WriteSchedule () {
+	
+	#remove schedule entry from service file
+	sed -i -e '/crond -b -c/d' "$SERVICESH"
+	
+	test -e "$LogFile" &&  rm -rf "$LogFile"
+	test -e "$SERVICESH" || touch "$SERVICESH"
+	test -d "$cronsDir" || mkdir -p "$cronsDir"
+	chmod 0755 "$cronsDir"
+	
+	#LogFile argument
+	echo "\ncrond -b -c $cronsDir $2" >> "$SERVICESH"
+	#echo "\ncrond -b -c $cronsDir -L $LogFile" >> "$SERVICESH"
+	
+	#Create a new one and run it
+	chmod 0755 "$SERVICESH" && chmod +x "$SERVICESH"
+			
+	#Create crons file if not available
+	test -e "$cronsfile" || touch "$cronsfile"
+	#echo "0,30 * * * * detach -id" > "$cronsfile"
+	echo "$1 detach -id" > "$cronsfile"
+	chmod 0755 "$cronsfile" && chmod +x "$cronsfile"
+			
+	#Execute
+	sh "$SERVICESH"
+	echo -e $Y"Rebooting once is recommended."$N
+
+}
+
+
 
 # Silent mode
 s() {
 	if [ -e "$SILENT" ]; then
-		echo -e $G"\nSilent mode actualy: Enabled"$N; sleep 2;
+		echo -e $G"\nSilent mode actualy: Enabled"$N; sleep 1;
 	else
-		echo -e $G"\nSilent mode actualy: Disabled"$N; sleep 2;
+		echo -e $G"\nSilent mode actualy: Disabled"$N; sleep 1;
 	fi
 		
 	if [ ! -e "$SILENT" ]; then
 		touch "$SILENT"
 		chmod 0644 "$SILENT"
-		echo -e $G"..\nNew mode: Enabled\n"$N; sleep 2;
+		echo -e $G"..\nNew mode: Enabled\n"$N; sleep 1;
 	else
 		rm -f "$SILENT"
-		echo -e $G"..\nNew mode: Disabled\n"$N; sleep 2;
+		echo -e $G"..\nNew mode: Disabled\n"$N; sleep 1;
 	fi
 	
 	# Selinux statut restoring
