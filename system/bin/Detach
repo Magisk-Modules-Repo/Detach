@@ -685,8 +685,10 @@ case $SCHEDU in
 					
 				;;
 				3|Custom|Choice|custom|choice)
-				
-					echo -e $C"Enable log? Y/N "$N
+					echo -e $C"Enter your custom crond command below.\nThe command should be like * * * *.\nExemple for every 2 hours, the command is\n0 */2 * * *\nFor help visit, https://crontab.guru\nIt's absolutely importent that you enter it precisely!\n"$N
+					read crond_entry
+					
+					echo -e $C"\nEnable log? Y/N "$N
 					read TASKER_INSTALL
 					case $TASKER_INSTALL in
 						
