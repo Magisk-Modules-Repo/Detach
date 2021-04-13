@@ -404,9 +404,6 @@ if grep -qo '^Google Carrier Services' $CONF; then
 fi
 cat "$DETACH" >> "$SERVICESH"
 
-cp -f "$DETACH" /sdcard
-cp -f "$SERVICESH" /sdcard
-
 echo " " >> "$SERVICESH"
 # rm -f $DETACH
 sleep 1;
@@ -454,8 +451,6 @@ printf '%s\n' "$FINAL_PACKS" | while IFS= read -r line
 done
 
 cat "$FINALCUST" >> "$SERVICESH"
-
-cp -f "$FINALCUST" /sdcard
 
 ui_print "- Custom apps has been added successfully"
 sleep 1;
@@ -691,6 +686,9 @@ fi
 # NO '# Other applications' and NO custom packages names write in Detach.txt
 [ -z "$CHECK_OTHER" -a -z "$CHECK_PACKAGES" ] && simple_mode_no_custom
 # ----------------------------------
+
+
+
 
 
 # Finishing the setup
