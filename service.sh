@@ -7,9 +7,6 @@ MAGMOD=/data/adb/modules/Detach
 instant_run=$MAGMOD/instant_run.sh
 instant_run_two=$MAGMOD/instant_run_two.sh
 # This script will be executed in late_start service mode
-#Reserved for crond schedule
-
-
 # More info in the main Magisk thread
 # Detach Apps from Market by hinxnz
 # Playstore database and SQLite directory'
@@ -25,6 +22,9 @@ if [ `getprop sys.boot_completed` = 1 ]; then sleep 60
 	
 # Stop playstore to make changes
 	am force-stop com.android.vending
+#Reserved for crond schedule
+
+	
 # Change directory'
 	cd $MODDIR
 
