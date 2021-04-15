@@ -3,9 +3,10 @@
 ps_accounts=$("$MODDIR/sqlite" $PS_DATA_PATH "SELECT account FROM ownership" | sort -u | wc -l)
 ps_accounts_final=$((ps_accounts+1))
 
+MAGMOD=$MODDIR
 test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
 chmod 0777 "$MAGMOD/first_detach_result.txt"
-sh "$MAGMOD/services.sh" > "$MAGMOD/first_detach_result.txt" 2>&1
+sh "$MAGMOD/service.sh" > "$MAGMOD/first_detach_result.txt" 2>&1
 
 if [ "$ps_accounts" -gt "1" ]; then
 	test -e "$instant_run_two" || touch "$instant_run_two"
@@ -15,7 +16,7 @@ if [ "$ps_accounts" -gt "1" ]; then
 	for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" > "$instant_run_two"; done
 	sed -i -e 's/.\t\/sqlite/.\/sqlite/' "$instant_run_two"
 	sed -i -e 's/..\/sqlite/.\/sqlite/' "$instant_run_two"
-	sed -i -e "s/SQLITE=\$MODD.\/sqlite//" "$instant_run_two"
+	sed -i -e "s/SQLITE=\$MODDIR\/sqlite//" "$instant_run_two"
 	echo -e '\n' >> "$instant_run_two"
 	
 	sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
