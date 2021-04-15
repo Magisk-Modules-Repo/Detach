@@ -648,61 +648,20 @@ case $SCHEDU in
 			read crond_entry
 			case $crond_entry in
 				1|30|30M|30m|30min)
-					echo -e $C"Enable log? Y/N "$N
-					read TASKER_INSTALL
-					case $TASKER_INSTALL in
-						
-						Y|y|Yes|yes|YES)
-						
-						#Entry With log
-						WriteSchedule "0,30 * * * *" "-L $LogFile"
-						echo -e "Log will be saved at\n$LogFile\n"
-						;;
-						N|n|No|no|NO)
-						#entry without log
-						WriteSchedule "0,30 * * * *"
-						;;
-					esac
+				
+					WriteSchedule "0,30 * * * *"
 	
 				;;
 				2|1hr|1hour|60|60min)
 				
-					echo -e $C"Enable log? Y/N "$N
-					read TASKER_INSTALL
-					case $TASKER_INSTALL in
-						
-						Y|y|Yes|yes|YES)
-						
-						#Entry With log
-						WriteSchedule "0 * * * *" "-L $LogFile"
-						echo -e "Log will be saved at\n$LogFile\n"
-						;;
-						N|n|No|no|NO)
-						#entry without log
-						WriteSchedule "0 * * * *"
-						;;
-					esac
-					
+					WriteSchedule "0 * * * *"
+
 				;;
 				3|Custom|Choice|custom|choice)
 					echo -e $C"Enter your custom crond command below.\nThe command should be like * * * *.\nExemple for every 2 hours, the command is\n0 */2 * * *\nFor help visit, https://crontab.guru\nIt's absolutely importent that you enter it precisely!\n"$N
 					read crond_entry
 					
-					echo -e $C"\nEnable log? Y/N "$N
-					read TASKER_INSTALL
-					case $TASKER_INSTALL in
-						
-						Y|y|Yes|yes|YES)
-						
-						#Entry With log
-						WriteSchedule "$crond_entry" "-L $LogFile"
-						echo -e "Log will be saved at\n$LogFile\n"
-						;;
-						N|n|No|no|NO)
-						#entry without log
-						WriteSchedule "$crond_entry"
-						;;
-					esac
+					WriteSchedule "$crond_entry"
 				
 				;;
 				4|view|View)
@@ -877,8 +836,25 @@ WriteSchedule () {
 	test -d "$cronsDir" || mkdir -p "$cronsDir"
 	chmod 0755 "$cronsDir"
 	
-	#LogFile argument
-	echo "\ncrond -b -c $cronsDir $2" >> "$SERVICESH"
+	#Log needed?
+	echo -e $C"Enable log? Y/N "$N
+	read TASKER_INSTALL
+	
+	case $TASKER_INSTALL in
+				
+		Y|y|Yes|yes|YES)
+		#LogFile argument
+		sed -i "11i\crond -b -c $cronsDir -L $LogFile" "$SERVICESH"
+		#echo "\ncrond -b -c $cronsDir -L $LogFile" >> "$SERVICESH"
+		echo -e "Log will be saved at\n$LogFile\n"
+	;;
+		N|n|No|no|NO)
+		#entry without log
+		sed -i "11i\crond -b -c $cronsDir" "$SERVICESH"
+		#echo "\ncrond -b -c $cronsDir" >> "$SERVICESH"
+	;;
+	esac
+	
 	#echo "\ncrond -b -c $cronsDir -L $LogFile" >> "$SERVICESH"
 	
 	#Create a new one and run it
