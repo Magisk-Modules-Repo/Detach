@@ -1,15 +1,17 @@
+MAGMOD=/data/adb/modules/Detach
+instant_run=$MAGMOD/instant_run.sh
+instant_run_two=$MAGMOD/instant_run_two.sh
+MAGMOD=$MODDIR
 
 # Multiple Play Store accounts compatibility
 ps_accounts=$("$MODDIR/sqlite" $PS_DATA_PATH "SELECT account FROM ownership" | sort -u | wc -l)
 ps_accounts_final=$((ps_accounts+1))
 
-MAGMOD=/data/adb/modules/Detach
-instant_run=$MAGMOD/instant_run.sh
-instant_run_two=$MAGMOD/instant_run_two.sh
-MAGMOD=$MODDIR
 test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
 chmod 0777 "$MAGMOD/first_detach_result.txt"
-sh "$MAGMOD/service.sh" > "$MAGMOD/first_detach_result.txt" 2>&1
+
+#prevent recursive run
+#sh "$MAGMOD/main.sh" > "$MAGMOD/first_detach_result.txt" 2>&1
 
 if [ "$ps_accounts" -gt "1" ]; then
 	test -e "$instant_run_two" || touch "$instant_run_two"

@@ -6,29 +6,26 @@
 MODDIR=${0%/*}
 # This script will be executed in late_start service mode. More info in the main Magisk thread
 # Detach Apps from Market by hinxnz
+# Playstore database and SQLite directory'
+PLAY_DB_DIR=/data/data/com.android.vending/databases
+SQLITE=$MODDIR/sqlite
 
-MAGMOD=/data/adb/modules/Detach
+# Wait till boot has completed'
 
-#Let boot status 
 i=0
 # Wait till boot has completed'
 (while [ 1 ]; do
 
-	
-	sleep 5
+	((i++))
+	if [[ $i -gt 1 ]]; then break; fi
+#set boot status = ture
 
-	if [ `getprop sys.boot_completed` = 1 ]; then 
-	
-		((i++))
-		if [[ $i -gt 1 ]]; then
-			break
-		fi
-		#Reserved for crond schedule
-		
-		
-		#prevent recursive run
-		su -c sh "$MAGMOD/main.sh" > "$MAGMOD/first_detach_result.txt" 2>&1
-		
-	fi
-	
-done &)
+
+# Disable service that populates database
+# (in investigation..)	
+# Stop playstore to make changes
+	am force-stop com.android.vending
+
+# Change directory'
+	cd $MODDIR
+# Detach following apps from market
