@@ -851,13 +851,13 @@ WriteSchedule () {
 				
 		Y|y|Yes|yes|YES)
 		#LogFile argument
-		sed -i "27i\		crond -b -c $cronsDir -L $LogFile" "$servicefile"
+		sed -i "24i\		crond -b -c $cronsDir -L $LogFile" "$servicefile"
 		#echo "\ncrond -b -c $cronsDir -L $LogFile" >> "$SERVICESH"
 		echo -e "Log will be saved at\n$LogFile\n"
 	;;
 		N|n|No|no|NO)
 		#entry without log
-		sed -i "27i\		crond -b -c $cronsDir" "$servicefile"
+		sed -i "24i\		crond -b -c $cronsDir" "$servicefile"
 		#echo "\ncrond -b -c $cronsDir" >> "$SERVICESH"
 	;;
 	esac
