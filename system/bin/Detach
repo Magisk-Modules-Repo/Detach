@@ -22,12 +22,13 @@ N='\e[0m' > /dev/null 2>&1; # Null
 #Detach Directory
 MAGMOD=$MAGIMG/Detach
 #Boot service directory
-SERVICESH=$MAGMOD/service.sh
+SERVICESH=$MAGMOD/main.sh
 SILENT=$MAGMOD/silent
 
 #crond schedule file
 cronsfile=$MAGMOD/crons/root
 cronsDir=$MAGMOD/crons
+servicefile=$MAGMOD/service.sh
 
 #log file location
 if [ -d "/storage/emulated/0" ] 
@@ -126,7 +127,8 @@ if [ "$ps_accounts" -gt "1" ]; then
 	sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
 fi
 
-cp -f "$instant_run" /sdcard
+#stop coping to sdcard
+#cp -f "$instant_run" /sdcard
 	
 wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
 if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
@@ -221,7 +223,7 @@ rm -f "$MAGMOD/apps_lists.txt"
 
 # Adding app
 add() {
-#SERVICESH=$MAGMOD/service.sh
+SERVICESH=$MAGMOD/main.sh
 CONF=$(ls /sdcard/Detach.txt || ls /storage/emulated/0/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 ACT_BASIC_APPS=$MAGMOD/act_basic_apps.txt
 ACT_CUST_APPS=$MAGMOD/act_cust_apps.txt
@@ -306,7 +308,8 @@ case $CONFIRMADD in
 		# Export sqlite cmds before writing all other contents in file (for Instant Run step)
 		su -c grep sqlite "$SERVICESH" | sed -i -e '1d' >> "$Instant_sqlite"
 		cat "$COMPATIBILITY" >> "$SERVICESH"
-		echo -e "\n\n# Exit\n	exit; fi\ndone &)\n" >> "$SERVICESH"
+		#echo -e "\n\n# Exit\n	exit; fi\ndone &)\n" >> "$SERVICESH"
+		echo -e "\n\n# Exit\ndone &)\n" >> "$SERVICESH"
 	else
 		# For custom
 		# Grep each sqlite commands with apps titles (common apps)
@@ -325,7 +328,8 @@ case $CONFIRMADD in
 		echo -e "\n\n" >> "$SERVICESH"
 		cat "$ACT_CUST_APPS" >> "$SERVICESH"
 		cat "$COMPATIBILITY" >> "$SERVICESH"
-		echo -e "\n\n# Exit\n	exit; fi\ndone &)\n" >> "$SERVICESH"
+		#echo -e "\n\n# Exit\n	exit; fi\ndone &)\n" >> "$SERVICESH"
+		echo -e "\n\n# Exit\ndone &)\n" >> "$SERVICESH"
 		echo -e $G"\n- Enable $WEB_NAME in your $CONF file.\n"$N
 		echo -e "$TOADD" >> "$CONF"
 	fi
@@ -410,13 +414,13 @@ case $CONFIRMADD in
 	*) echo $R"\n\nINVALID ENTRY, try again.\n"$N
 ;;
 esac
-
-cp -f "$instant_run" /sdcard
+#stop coping to sdcard
+#cp -f "$instant_run" /sdcard
 
 	
 rm -f "$ACT_BASIC_APPS"
 rm -f "$ACT_CUST_APPS"
-# rm -f "$instant_run"
+#rm -f "$instant_run"
 rm -f "$Instant_sqlite"
 rm -f "$MAGMOD/first_detach_result.txt"
 rm -f $MAGMOD/*.html
@@ -435,7 +439,7 @@ esac
 
 # Removing app
 rem() {
-#SERVICESH=$MAGMOD/service.sh
+SERVICESH=$MAGMOD/main.sh
 ACTAPPS=$MAGMOD/actapps.txt
 ACTAPPSRD=$MAGMOD/actapps_ready.txt
 SERVICESHFN=$MAGMOD/final_service.sh
@@ -646,6 +650,8 @@ case $SCHEDU in
 			echo -e $B"\nPlease select your desired crond schedule.\n1 for 30 minutes interval.\n2 for 1 hour interval.\n3 your choice.\nMake sure to check your input before entering (* * * *).\nFor help visit,\nhttps://crontab.guru\n\n4 to view current schedule (raw).\n5 to delete existing crond schedule.\n6 to exit.\n\nNow just make your choice..\n(1, 2, 3, 4,...)\n"$N
 			#echo -e $B"\nPlease enter your full crond command below.\nFormats for times: Minute (0-59) SPACE Hour (0-23) SPACE Day of mount (1-31) SPACE Month (1-12) SPACE Day of Week (0-6) (For Sunday=0 or 7)\nCommand exemple for every 2 hours:\ncrond 0 */2 * * * su -c detach -id\n\n"$N
 			read crond_entry
+			servicefile=$MAGMOD/service.sh
+			
 			case $crond_entry in
 				1|30|30M|30m|30min)
 				
@@ -683,7 +689,7 @@ case $SCHEDU in
 						if [ -f "$cronsfile" ]; then
 						
 							#remove schedule entry from service file
-							sed -i -e '/crond -b -c/d' "$SERVICESH"
+							sed -i -e '/crond -b -c/d' "$servicefile"
 							rm -rf "$cronsfile"
 							rm -rf "$LogFile"
 							
@@ -827,12 +833,13 @@ esac
 
 #function to write crond schedule in file
 WriteSchedule () {
-	
+
+	servicefile=$MAGMOD/service.sh
 	#remove schedule entry from service file
-	sed -i -e '/crond -b -c/d' "$SERVICESH"
+	sed -i -e '/crond -b -c/d' "$servicefile"
 	
 	test -e "$LogFile" &&  rm -rf "$LogFile"
-	test -e "$SERVICESH" || touch "$SERVICESH"
+	#test -e "$servicefile" || touch "$servicefile"
 	test -d "$cronsDir" || mkdir -p "$cronsDir"
 	chmod 0755 "$cronsDir"
 	
@@ -844,13 +851,13 @@ WriteSchedule () {
 				
 		Y|y|Yes|yes|YES)
 		#LogFile argument
-		sed -i "26i\crond -b -c $cronsDir -L $LogFile" "$SERVICESH"
+		sed -i "27i\		crond -b -c $cronsDir -L $LogFile" "$servicefile"
 		#echo "\ncrond -b -c $cronsDir -L $LogFile" >> "$SERVICESH"
 		echo -e "Log will be saved at\n$LogFile\n"
 	;;
 		N|n|No|no|NO)
 		#entry without log
-		sed -i "26i\crond -b -c $cronsDir" "$SERVICESH"
+		sed -i "27i\		crond -b -c $cronsDir" "$servicefile"
 		#echo "\ncrond -b -c $cronsDir" >> "$SERVICESH"
 	;;
 	esac
@@ -858,7 +865,7 @@ WriteSchedule () {
 	#echo "\ncrond -b -c $cronsDir -L $LogFile" >> "$SERVICESH"
 	
 	#Create a new one and run it
-	chmod 0755 "$SERVICESH" && chmod +x "$SERVICESH"
+	chmod 0755 "$servicefile" && chmod +x "$servicefile"
 			
 	#Create crons file if not available
 	test -e "$cronsfile" || touch "$cronsfile"
@@ -867,7 +874,7 @@ WriteSchedule () {
 	chmod 0755 "$cronsfile" && chmod +x "$cronsfile"
 			
 	#Execute
-	sh "$SERVICESH"
+	sh "$servicefile"
 	echo -e $Y"Rebooting once is recommended."$N
 
 }
