@@ -21,7 +21,7 @@ MAGMOD=/data/adb/modules/Detach
 	
 	
 		#Reserved for crond schedule
-		crond -b -c /data/adb/modules/Detach/crons -L /storage/emulated/0/cronlogs.txt
+		
 		
 		
 		#prevent recursive run
