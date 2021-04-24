@@ -2,14 +2,14 @@
 # Do NOT assume where your module will be located.
 # ALWAYS use $MODDIR if you need to know where this script and module is placed.
 # This will make sure your module will still work if Magisk change its mount point in the future
-
 MODDIR=${0%/*}
 
 # This script will be executed in late_start service mode. More info in the main Magisk thread
 # Detach Apps from Market by hinxnz
+#Modify the necessary varible MODDIR with magisk provided  varible eg. /data/adb/modules/Detach
+#sed  -i -e "s/^MODDIR.*$/MODDIR=${MODDIR}/" "$MODDIR/Detach"
 
-
-MAGMOD=/data/adb/modules/Detach
+MAGMOD=$MODDIR
 
 #Let boot status 
 
