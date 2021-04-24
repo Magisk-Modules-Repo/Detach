@@ -497,7 +497,7 @@ ps_accounts=$("$TMPDIR/sqlite" $PS_DATA_PATH "SELECT account FROM ownership" | s
 cat /dev/null > "$instant_run"
 
 echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${TMPDIR}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$instant_run"
-sed -n '32,$p' "$SERVICESH" | sed -n '/^\s*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$instant_run"
+sed -n '32,$p' "$SERVICESH" | sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$instant_run"
 	
 echo -e "\n" >> "$instant_run"
 	
@@ -510,7 +510,7 @@ if [ "$ps_accounts" -gt "1" ]; then
 	chmod 0777 "$instant_run_two" && chmod +x "$instant_run_two"
 	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${TMPDIR}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" > "$instant_run_two"
 	am force-stop com.android.vending
-	for i in {1..${ps_accounts_final}}; do sed -n '/^\s*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
+	for i in {1..${ps_accounts_final}}; do sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
 	#sed -i -e "s/.$(echo a | tr 'a' '\t')\/sqlite/\$SQLITE\/sqlite/" "$instant_run_two"
 	#sed -i -e 's/..\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
 	#sed -i -e 's/.\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
@@ -535,7 +535,7 @@ if grep -q "$wrong_result" "$TMPDIR/first_detach_result.txt"; then
 	for o in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do touch "$o" && cat /dev/null > "$o" && chmod 0644 "$o"; done
 	
 	PLAY_DB_DIR=/data/data/com.android.vending/databases
-	sed -n '/^\s*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$ACTAPPS"
+	sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$ACTAPPS"
 	#grep sqlite "$SERVICESH" > "$ACTAPPS"
 	sed -i -e "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
 	sed -i -e '1d' "$ACTAPPS"
