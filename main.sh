@@ -25,7 +25,7 @@ i=0
 # (in investigation..)	
 # Stop playstore to make changes
 	am force-stop com.android.vending
-	Sleep 1;
+	sleep 1
 # Change directory'
 	cd $MAGMOD
 # Detach following apps from market
