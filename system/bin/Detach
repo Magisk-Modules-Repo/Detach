@@ -84,6 +84,9 @@ esac
 
 # Instant Detach
 ida() {
+MODDIR=/data/adb/modules/Detach
+#Detach Directory
+MAGMOD=$MODDIR
 Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
 echo -e $C"\nDetach $Detach_version\n\nDetach work in progress..."$N
 
@@ -106,7 +109,7 @@ ps_accounts=$("$MAGMOD/sqlite" $PS_DATA_PATH "SELECT account FROM ownership" | s
 ps_accounts_final=$((ps_accounts+1))
 
 cat /dev/null > "$instant_run"
-echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGMOD\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nSleep 1;\n" >> "$instant_run"
+echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGMOD\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$instant_run"
 
 #egrep "^[[:space:]]*$SQLITE/sqlite" "$SERVICESH" >> "$instant_run"
 sed -n '/^\s*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$instant_run"
@@ -120,9 +123,9 @@ echo -e "\n" >> "$instant_run"
 if [ "$ps_accounts" -gt "1" ]; then
 	test -e "$instant_run_two" || touch "$instant_run_two"
 	chmod 0644 "$instant_run_two"
-	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGMOD\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nSleep 1;\n" > "$instant_run_two"
+	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGMOD\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" > "$instant_run_two"
 	am force-stop com.android.vending
-	sleep 1;
+	sleep 1
 	for i in {1..${ps_accounts_final}}; do sed -n '/^\s*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
 	#sed -i -e "s/.$(echo a | tr 'a' '\t')\/sqlite/\$SQLITE\/sqlite/" "$instant_run_two"
 	#sed -i -e 's/..\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
@@ -322,7 +325,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 			ps_accounts_final=$((ps_accounts+1))
 			
 			cat /dev/null > "$instant_run"
-			echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nSleep 1;\n" >> "$instant_run"
+			echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$instant_run"
 			
 			#not needed as passing whole path
 			sed -n '/^\s*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$instant_run"
@@ -337,9 +340,9 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 			if [ "$ps_accounts" -gt "1" ]; then
 				test -e "$instant_run_two" || touch "$instant_run_two"
 				chmod 0644 "$instant_run_two"
-				echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nSleep 1;\n" > "$instant_run_two"
+				echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" > "$instant_run_two"
 				am force-stop com.android.vending
-				sleep 1;
+				sleep 1
 				for i in {1..${ps_accounts_final}}; do sed -n '/^\s*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
 				#sed -i -e "s/.$(echo a | tr 'a' '\t')\/sqlite/$SQLITE\/sqlite/" "$instant_run_two"
 				#sed -i -e 's/..\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
@@ -363,7 +366,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 				sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
 				PLAY_DB_DIR=/data/data/com.android.vending/databases
 				cp -f "$ACTAPPS" "$ACTAPPSBCK"
-				echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nSleep 1;\n" >> "$FINAL"
+				echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$FINAL"
 				
 				var_ACTAPPS=$(awk '{ print }' "$ACTAPPSBCK")
 				for i in $(echo "$var_ACTAPPS"); do echo -e "$MAGMOD/sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$i' AND library_id = '3'\";" >> "$FINAL"; done
@@ -414,6 +417,9 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 
 # Removing app
 rem() {
+MODDIR=/data/adb/modules/Detach
+#Detach Directory
+MAGMOD=$MODDIR
 SERVICESH=$MAGMOD/main.sh
 ACTAPPS=$MAGMOD/actapps.txt
 ACTAPPSRD=$MAGMOD/actapps_ready.txt
@@ -428,13 +434,13 @@ chmod 0644 "$ACTAPPS"
 PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
 
 #egrep "^[[:space:]]*$SQLITE/sqlite" "$SERVICESH" >> "$ACTAPPS"
-sed -n '/^\s*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$instant_run"
+sed -n '/^\s*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$ACTAPPS"
 sed -i -e "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
 sed -i -e 's/[ \t]*//' "$ACTAPPS"
 
 
 printf '%s\n' "$ACTAPPS" | while IFS= read -r line
-	do echo -e "\n\nHided app(s):\n$divider\n"
+	do echo -e "\n\nHidden app(s):\n$divider\n"
 	cat "$line"
 	echo -e "\n$divider\n"
 done
@@ -582,6 +588,10 @@ Now just make your choice..
 SCHEDULE
 
 read SCHEDU
+
+MODDIR=/data/adb/modules/Detach
+#Detach Directory
+MAGMOD=$MODDIR
 
 case $SCHEDU in
 	1|Tasker|tasker|TASKER)
@@ -809,6 +819,10 @@ esac
 
 #function to write crond schedule in file
 WriteSchedule () {
+
+MODDIR=/data/adb/modules/Detach
+#Detach Directory
+MAGMOD=$MODDIR
 
 	servicefile=$MAGMOD/service.sh
 	#remove schedule entry from service file
