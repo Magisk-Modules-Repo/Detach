@@ -496,7 +496,7 @@ ps_accounts=$("$TMPDIR/sqlite" $PS_DATA_PATH "SELECT account FROM ownership" | s
 	
 cat /dev/null > "$instant_run"
 
-echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${TMPDIR}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nSleep 1;\n" >> "$instant_run"
+echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${TMPDIR}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$instant_run"
 sed -n '32,$p' "$SERVICESH" | sed -n '/^\s*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$instant_run"
 	
 echo -e "\n" >> "$instant_run"
@@ -508,7 +508,7 @@ sh "$instant_run" > "$TMPDIR/first_detach_result.txt" 2>&1
 if [ "$ps_accounts" -gt "1" ]; then
 	test -e "$instant_run_two" || touch "$instant_run_two"
 	chmod 0777 "$instant_run_two" && chmod +x "$instant_run_two"
-	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${TMPDIR}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nSleep 1;\n" > "$instant_run_two"
+	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${TMPDIR}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" > "$instant_run_two"
 	am force-stop com.android.vending
 	for i in {1..${ps_accounts_final}}; do sed -n '/^\s*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
 	#sed -i -e "s/.$(echo a | tr 'a' '\t')\/sqlite/\$SQLITE\/sqlite/" "$instant_run_two"
