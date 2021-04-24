@@ -9,7 +9,7 @@ MODDIR=${0%/*}
 PLAY_DB_DIR=/data/data/com.android.vending/databases
 MAGMOD=$MODDIR
 SQLITE=$MAGMOD
-SERVICESH=$MODDIR/main.sh
+
 # Wait till boot has completed'
 
 i=0
