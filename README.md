@@ -18,7 +18,7 @@ NOTE BEFORE INSTALL: DON'T FLASH THIS MODULE IN TWRP. USE MAGISK MANAGER ONLY TO
 <br />
 
 <b><h3>:scroll: Setup steps:</h3></b>
-- Start by downloading the <a href="https://github.com/xerta555/Detach-Files/raw/master/Detach.txt">Detach.txt</a> file to your `/sdcard/` folder: <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/Detach.txt">Detach.txt</a>
+- Start by downloading the <a href="https://raw.githubusercontent.com/sobuj53/Detach/master/Detach.txt">Detach.txt</a> file to your `/sdcard/` folder: <a href="https://raw.githubusercontent.com/sobuj53/Detach/master/Detach.txt">Detach.txt</a>
   - (equivalent to `/storage/emulated/0/`)
 - Uncomment the common app(s) you want in this file
 - Save changes
@@ -77,7 +77,7 @@ NOTE BEFORE INSTALL: DON'T FLASH THIS MODULE IN TWRP. USE MAGISK MANAGER ONLY TO
 <br />
 
 <b>For common apps:</b>
-- You have to download the `Detach.txt` file: <a href="https://raw.githubusercontent.com/xerta555/Detach-Files/master/Detach.txt">Detach.txt</a>
+- You have to download the `Detach.txt` file: <a href="https://raw.githubusercontent.com/sobuj53/Detach/master/Detach.txt">Detach.txt</a>
 - Save it in your internal storage: `/sdcard/Detach.txt` (quivalent to `/storage/emulated/0/Detach.txt`).
  
 <img src="https://i.ibb.co/X54TnPG/Screenshot-20190923-184536.png" alt="Screenshot-20190815-170758.png" height="1200" width="600">
