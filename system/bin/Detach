@@ -87,6 +87,10 @@ ida() {
 MODDIR=/data/adb/modules/Detach
 #Detach Directory
 MAGMOD=$MODDIR
+#Boot service directory
+SERVICESH=$MAGMOD/main.sh
+CONF=$(ls /sdcard/detach.txt || ls /sdcard/Detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
+
 Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
 echo -e $C"\nDetach $Detach_version\n\nDetach work in progress..."$N
 
@@ -112,7 +116,7 @@ cat /dev/null > "$instant_run"
 echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGMOD\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$instant_run"
 
 #egrep "^[[:space:]]*$SQLITE/sqlite" "$SERVICESH" >> "$instant_run"
-sed -n '/^\s*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$instant_run"
+sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$instant_run"
 
 echo -e "\n" >> "$instant_run"
 
@@ -126,7 +130,7 @@ if [ "$ps_accounts" -gt "1" ]; then
 	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGMOD\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" > "$instant_run_two"
 	am force-stop com.android.vending
 	sleep 1
-	for i in {1..${ps_accounts_final}}; do sed -n '/^\s*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
+	for i in {1..${ps_accounts_final}}; do sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
 	#sed -i -e "s/.$(echo a | tr 'a' '\t')\/sqlite/\$SQLITE\/sqlite/" "$instant_run_two"
 	#sed -i -e 's/..\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
 	#sed -i -e 's/.\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
@@ -210,7 +214,7 @@ esac
 # List hided apps
 list() {
 apps_list_basic=$(tail -n +32 "$SERVICESH" | grep -e "# [A-Z]" | sed 's/# Custom Packages//' | sed 's/# Multiple.*//' | sed '$ d' | sed 's/[[:blank:]]*//' | grep "# [A-Za-z0-9]" | sed 's/# //')
-apps_list_cust=$(sed -n '/# Custom Packages/,$p' $SERVICESH | sed -n '/^\s*$SQLITE\/sqlite.*/p' |sed "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" | sed "s/'\";//" | sed 's/[[:space:]]//')
+apps_list_cust=$(sed -n '/# Custom Packages/,$p' $SERVICESH | sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' |sed "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" | sed "s/'\";//" | sed 's/[[:space:]]//')
 
 echo "$apps_list_basic" >> "$MAGMOD/apps_lists.txt"
 echo "$apps_list_cust" >> "$MAGMOD/apps_lists.txt"
@@ -327,8 +331,9 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 			cat /dev/null > "$instant_run"
 			echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$instant_run"
 			
-			#not needed as passing whole path
-			sed -n '/^\s*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$instant_run"
+			#not needed as passing whole path 
+			#doen't work
+			sed -n '/^[[:space:]]*$SQLITE\/sqlite.*$/p' "$SERVICESH" >> "$ACTAPPS"
 			#egrep "^[[:space:]]*$SQLITE/sqlite" "$SERVICESH" >> "$instant_run"
 			
 			echo "" >> "$instant_run"
@@ -343,7 +348,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 				echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" > "$instant_run_two"
 				am force-stop com.android.vending
 				sleep 1
-				for i in {1..${ps_accounts_final}}; do sed -n '/^\s*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
+				for i in {1..${ps_accounts_final}}; do sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
 				#sed -i -e "s/.$(echo a | tr 'a' '\t')\/sqlite/$SQLITE\/sqlite/" "$instant_run_two"
 				#sed -i -e 's/..\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
 				#sed -i -e 's/.\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
@@ -434,7 +439,7 @@ chmod 0644 "$ACTAPPS"
 PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
 
 #egrep "^[[:space:]]*$SQLITE/sqlite" "$SERVICESH" >> "$ACTAPPS"
-sed -n '/^\s*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$ACTAPPS"
+sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$ACTAPPS"
 sed -i -e "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
 sed -i -e 's/[ \t]*//' "$ACTAPPS"
 
