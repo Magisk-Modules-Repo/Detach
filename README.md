@@ -43,7 +43,7 @@ NOTE BEFORE INSTALL: DON'T FLASH THIS MODULE IN TWRP. USE MAGISK MANAGER ONLY TO
 
 <b>:heavy_check_mark: Compatibility:</b>
 - Magisk (v15 to lastest)
-- All Android devices from Lollipop to Pie
+- All Android devices from Lollipop + (A11 supported)
 - Magisk Manager
 - Substratum themes for Play Store
 - Any Linux text editor (for `LF` line-end usage by default)
