@@ -264,11 +264,14 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 
 		echo -e $C"\n\n '$TOADD' - Do you confirm ? (yes or no)"$N; sleep 2;
 		read CONFIRMADD
-		if [ $(cat "$SERVICESH" | grep "$TOADD" | sed 's/  #//') ]; then
-			echo -e $R"\n! The name that you have entered already exist in your list\n=> Type su -c Detach -a or su and Detach -a again to add another package name in your list.\n\n"$N; sleep 3;
+		
+		app_name="\$SQLITE/sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$TOADD'\";"
+		
+		if grep -qF -- "$app_name" "$SERVICESH"; then
+		  	echo -e $R"\n! The name that you have entered already exist in your list\n=> Type su -c Detach -a or su and Detach -a again to add another package name in your list.\n\n"$N; sleep 3;
 			exit
 		fi
-
+		
 		if [ $(echo "$TOADD" | wc -l) -gt 1 ]; then
 			echo -e $R"\n! Please enter only one package name at a time."$N; sleep 3;
 			exit
@@ -300,7 +303,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 				fi
 					
 				# Just paste after last match of $SQLITE/sqlite \\t is for tab
-				app_name="\$SQLITE/sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$TOADD'\";"
+			
 				grep -qF -- "$app_name" "$SERVICESH" || sed -i -e "$(grep -n '^[[:blank:]]*$SQLITE/sqlite' $SERVICESH |tail -1|cut -f1 -d':')a \\n \\t $app_name" "$SERVICESH"
 				
 				sh $servicefile
