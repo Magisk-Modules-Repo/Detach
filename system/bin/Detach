@@ -484,7 +484,7 @@ case $CONFTODEL in
 			# Import data (extracted from DB file during module setup) to DB file
 			# Check
 			echo -e $C"\n\n=> Searching for backups...\n\n"$N; sleep 1;
-			ls | grep "^Backup_${APPLINE2REM}_*\.csv$" "$MAGMOD" >> "$MAGMOD/DB_BCK_CHECK.txt"
+			ls | grep "^Backup_${APPLINE2REM}_*\.csv$" "$MAGMOD/Backup_$APPLINE2REM*.csv" >> "$MAGMOD/DB_BCK_CHECK.txt"
 			if [ -z "$DB_BCK_CHECK"  ]; then
 				echo -e $R"\n\n ! No backup found, your app will appear again in you Play Store app when it will refresh it's database file.\n\n"$N; sleep 3; exit ;
 			fi
