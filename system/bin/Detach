@@ -231,7 +231,6 @@ rm -f "$MAGMOD/apps_lists.txt"
 }
 
 
-
 # Adding app
 add() {
 #Reserved place for MODDIR line 231
@@ -248,6 +247,12 @@ DL_CHECK=$MAGMOD/DL_check.txt
 backup_txt=$(date +'%m/%d/%Y')
 PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
 applist=$MAGMOD/appslist.csv
+ACTAPPS=$MAGMOD/actapps.txt
+ACTAPPSBCK=$MAGMOD/actapps.bak
+FINAL=$MAGMOD/final.sh
+PLAY_DB_DIR=/data/data/com.android.vending/databases
+instant_run=$MAGMOD/instant_run.sh
+instant_run_two=$MAGMOD/instant_run_two.sh
 
 #check net connecton
 if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
@@ -318,9 +323,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 		
 			
 			# Instant Run
-			instant_run=$MAGMOD/instant_run.sh
-			instant_run_two=$MAGMOD/instant_run_two.sh
-			
+
 			test -e "$instant_run" || touch "$instant_run"
 			chmod 0777 "$instant_run" && chmod +x "$instant_run"
 			
@@ -332,7 +335,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 			echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$instant_run"
 			
 			#not needed as passing whole path 
-			#doen't work
+			test -e "$ACTAPPS" || touch "$ACTAPPS"
 			sed -n '/^[[:space:]]*$SQLITE\/sqlite.*$/p' "$SERVICESH" >> "$ACTAPPS"
 			#egrep "^[[:space:]]*$SQLITE/sqlite" "$SERVICESH" >> "$instant_run"
 			
@@ -361,15 +364,13 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 					
 			if grep "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 				[ -e "$MAGMOD/silent" ] || echo -e $C"\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"$N; sleep 1;
-				ACTAPPS=$MAGMOD/actapps.txt
-				ACTAPPSBCK=$MAGMOD/actapps.bak
-				FINAL=$MAGMOD/final.sh
+			
 				for o in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do touch "$o" && cat /dev/null > "$o" && chmod 0644 "$o"; done
 				#grep sqlite "$MODDIR/instant_exist_final.txt" > "$ACTAPPS"
 				sed -i -e "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
 				sed -i -e '1d' "$ACTAPPS"
 				sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
-				PLAY_DB_DIR=/data/data/com.android.vending/databases
+				
 				cp -f "$ACTAPPS" "$ACTAPPSBCK"
 				echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$FINAL"
 				
