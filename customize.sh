@@ -21,7 +21,7 @@ pre_request() {
 ui_print
 ui_print "- Extracting module files"
 [ ! -d "$MODPATH/system/bin" ] && mkdir -p "$MODPATH/system/bin"
-unzip -o "$ZIPFILE" module.prop service.sh main.sh appslist.csv compatibility.txt sqlite sqlite.txt 'system/*' -x LICENSE .gitattributes README.md -d "$TMPDIR" 1>/dev/null
+unzip -o "$ZIPFILE" module.prop service.sh main.sh appslist.csv sepolicy.rule compatibility.txt sqlite sqlite.txt 'system/*' -x LICENSE .gitattributes README.md -d "$TMPDIR" 1>/dev/null
 
 [ ! -e "$TMPDIR/system/bin/Detach" ] && unzip -o "$ZIPFILE" 'system/system/bin/Detach' "$TMPDIR/system/bin/Detach"
 
@@ -595,7 +595,7 @@ sleep 1;
 complete_script() {
 # =============================================
 ui_print "- Extracting module files"
-for i in "$TMPDIR/compatibility.txt" "$TMPDIR/sqlite" "$TMPDIR/service.sh" "$TMPDIR/appslist.csv" "$TMPDIR/sqlite.txt" "$TMPDIR/module.prop"; do cp -af "$i" "$MODPATH/"; done
+for i in "$TMPDIR/compatibility.txt" "$TMPDIR/sqlite" "$TMPDIR/service.sh" "$TMPDIR/appslist.csv" "$TMPDIR/sepolicy.rule" "$TMPDIR/sqlite.txt" "$TMPDIR/module.prop"; do cp -af "$i" "$MODPATH/"; done
 
 
 # =============================================
@@ -605,7 +605,7 @@ set_perm_recursive $TMPDIR 0 0 0755 0644
 set_perm $MODPATH/system/bin/Detach 0 0 0777
 chmod 0755 $TMPDIR/sqlite
 chgrp 2000 $TMPDIR/sqlite
-
+chmod 0755 "$MODPATH/sepolicy.rule" && chmod +x "$MODPATH/sepolicy.rule"
 chmod 0755 "$MODPATH/service.sh" && chmod +x "$MODPATH/service.sh"
 
 chmod 0755 $MODPATH/sqlite
