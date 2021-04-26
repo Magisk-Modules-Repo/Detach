@@ -53,10 +53,10 @@ fi
 # The selinux state need to be in 'Permissive' mode, because this script use the 'am' shell command under Android 8 and higher because of it's selinux rules.
 # On Android 8 and higher if the selinux status is in 'Enforcing' mode, the selinux rules don't allow/prevent apps from killing/stopping other process through am command.
 # It's why we set temporary set the selinux state in permissive mode if it's state is in enforcing mode, and restore it in it initial state at the end.
-SELINUX_STATUT=$(getenforce)
-if [ "$SELINUX_STATUT" = "Enforcing" ]; then
-	setenforce 0
-fi
+#SELINUX_STATUT=$(getenforce)
+#if [ "$SELINUX_STATUT" = "Enforcing" ]; then
+#	setenforce 0
+#fi
 
 
 Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
@@ -122,7 +122,7 @@ echo -e "\n" >> "$instant_run"
 
 # test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
 # chmod 0644 "$MAGMOD/first_detach_result.txt"
- sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
+ su -c sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
 
 if [ "$ps_accounts" -gt "1" ]; then
 	test -e "$instant_run_two" || touch "$instant_run_two"
@@ -136,7 +136,7 @@ if [ "$ps_accounts" -gt "1" ]; then
 	#sed -i -e 's/.\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
 	echo -e '\n' >> "$instant_run_two"
 	
-	sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
+	su -c sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
 fi
 
 #stop coping to sdcard
@@ -178,7 +178,7 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 			do echo -e "$SQLITE/sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$line' AND library_id = '3'\";\n" >> "$FINAL"
 		done
 		chmod +x "$FINAL"
-		sh "$FINAL"
+		su -c sh "$FINAL"
 	else
 		echo -e "\ncd $MAGMOD\n\n" >> "$FINAL"
 		while [ "$ZERO" -le "$SQL_ENTRY_TEST" ]; do
@@ -187,7 +187,7 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 			done
 			SQL_ENTRY_TEST=$(($SQL_ENTRY_TEST - 1))
 		done
-		sh "$FINAL"
+		su -c sh "$FINAL"
 	fi
 	
 	for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/first_detach_result.txt"; do rm -f "$f"; done
@@ -202,12 +202,12 @@ am force-stop com.android.vending
 rm -f "$MAGMOD/SYN_CONF.txt"
 
 # Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 
@@ -229,6 +229,7 @@ echo -e "\n$divider\n"
 
 rm -f "$MAGMOD/apps_lists.txt"
 }
+
 
 
 # Adding app
@@ -306,7 +307,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 			
 				grep -qF -- "$app_name" "$SERVICESH" || sed -i -e "$(grep -n '^[[:blank:]]*$SQLITE/sqlite' $SERVICESH |tail -1|cut -f1 -d':')a \\n \\t $app_name" "$SERVICESH"
 				
-				sh $servicefile
+				su -c sh $servicefile
 			else
 				#echo "URL : $URL doesn't exists.."
 				echo -e "\nWarning: The package name of the application you just\nentered does not exist in the Play Store.\n"
@@ -346,7 +347,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 
 			test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
 			chmod 0644 "$MAGMOD/first_detach_result.txt"
-			sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
+			su -c sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
 
 			if [ "$ps_accounts" -gt "1" ]; then
 				test -e "$instant_run_two" || touch "$instant_run_two"
@@ -360,7 +361,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 				#sed -i -e 's/.\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
 				echo -e '\n' >> "$instant_run_two"
 			
-				sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
+				su -c sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
 			fi
 
 			wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
@@ -379,7 +380,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 				
 				var_ACTAPPS=$(awk '{ print }' "$ACTAPPSBCK")
 				for i in $(echo "$var_ACTAPPS"); do echo -e "$MAGMOD/sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$i' AND library_id = '3'\";" >> "$FINAL"; done
-				sh "$FINAL"
+				su -c sh "$FINAL"
 				am force-stop com.android.vending
 							
 				echo -e $G"\nDetaching task done\n"$N
@@ -409,12 +410,12 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 		rm -rf "$MAGMOD/$TOADD.txt"
 		rm -rf "$FINAL"
 			# Selinux statut restoring
-		case "$SELINUX_STATUT" in
-			Enforcing) setenforce 1
-			;;
-			Permissive) setenforce 0
-			;;
-		esac
+		#case "$SELINUX_STATUT" in
+		#	Enforcing) setenforce 1
+		#	;;
+		#	Permissive) setenforce 0
+		#	;;
+		#esac
 
  else
 		echo -e $Y"You will need internet connecton for this option!"$N
@@ -525,12 +526,12 @@ for k in "$ACTAPPS" "$ACTAPPSRD"; do rm -f "$k"; done
 echo -e $B"\nExit...\n"$N; sleep 1;
 
 # Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 
 	exit
 }
@@ -543,12 +544,12 @@ k() {
 	[ -e "$MAGMOD/silent" ] || echo -e $G"\nPS app has been force-stop.\n"$N
 	
 	# Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 
@@ -559,12 +560,12 @@ c() {
 	[ -e "$MAGMOD/silent" ] || echo -e $G"\nDone\n"$N
 	
 	# Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 
@@ -818,12 +819,12 @@ case $SCHEDU in
 esac
 		
 	# Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 #function to write crond schedule in file
@@ -873,7 +874,7 @@ MAGMOD=$MODDIR
 	chmod 0755 "$cronsfile" && chmod +x "$cronsfile"
 			
 	#Execute
-	sh "$servicefile"
+	su -c sh "$servicefile"
 	echo -e $Y"Rebooting once is recommended."$N
 
 }
@@ -898,12 +899,12 @@ s() {
 	fi
 	
 	# Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 
@@ -1023,12 +1024,12 @@ HELP_PLUS
 fi
 
 # Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 
