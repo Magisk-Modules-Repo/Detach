@@ -259,7 +259,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 
 		for i in "$ACT_BASIC_APPS" "$ACT_CUST_APPS" "$Instant_sqlite"; do  [ ! -e "$i" ] && touch "$i" && chmod -R 0644 "$i"; done
 
-		echo -e $C"\n\nPlease write the application package name\nyou want to detach from automatic PS update.\n\n***Make suer to check your Detach.txt\n If the package is already there,\njust remove the # before that!\n\nPackage name: "$N
+		echo -e $C"\n\nPlease write the application package name\nyou want to detach from automatic PS update.\n\nPackage name: "$N
 		read TOADD
 
 		echo -e $C"\n\n '$TOADD' - Do you confirm ? (yes or no)"$N; sleep 2;
@@ -292,7 +292,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 					#remove # infron of app name
 					#get line number in detach.txt
 					BASIC_NUMBER=$(sed 's/^#//g' "$CONF" | grep -no "$pkgName" | cut -f1 -d: | sort -u)	
-					echo -e  $G"\n- Uncomment $pkgName in your $CONF file\n"$N; sleep 2;
+					echo -e  $G"\n- Uncommenting $pkgName in your $CONF file\n"$N; sleep 2;
 					sed -i -e "${BASIC_NUMBER}s/#${pkgName}/${pkgName}/" "$CONF"
 
 				else
@@ -407,7 +407,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 		rm -rf "$MAGMOD/first_detach_result.txt"
 		rm -rf "$MAGMOD/DL_check.txt"
 		rm -rf "$MAGMOD/$TOADD.txt"
-
+		rm -rf "$FINAL"
 			# Selinux statut restoring
 		case "$SELINUX_STATUT" in
 			Enforcing) setenforce 1
