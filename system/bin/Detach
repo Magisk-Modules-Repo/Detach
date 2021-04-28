@@ -440,7 +440,7 @@ chmod 0644 "$ACTAPPSRD"
 touch "$ACTAPPS"
 chmod 0644 "$ACTAPPS"
 
-PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
+#PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
 
 #egrep "^[[:space:]]*$SQLITE/sqlite" "$SERVICESH" >> "$ACTAPPS"
 sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$ACTAPPS"
@@ -483,32 +483,8 @@ case $CONFTODEL in
 			
 			# Import data (extracted from DB file during module setup) to DB file
 			# Check
-			echo -e $C"\n\n=> Searching for backups...\n\n"$N; sleep 1;
-			ls | grep "^Backup_${APPLINE2REM}_*\.csv$" "$MAGMOD/Backup_$APPLINE2REM*.csv" >> "$MAGMOD/DB_BCK_CHECK.txt"
-			if [ -z "$DB_BCK_CHECK"  ]; then
-				echo -e $R"\n\n ! No backup found, your app will appear again in you Play Store app when it will refresh it's database file.\n\n"$N; sleep 3; exit ;
-			fi
-			if [ $(echo "$APPLINE2REM" | wc -l) -ge "2" ]; then
-				echo -e $R"\n\n=> Removing old backup(s)...\n\n"$N; sleep 2;
-				
-				# Search all backup(s) for the specific app and delete it/them
-				ls -A1 "$MAGMOD/Backup_$APPLINE2REM*.csv" | sed -n '1!p' | xargs rm -f
-			fi
-			echo -e $C"\n\n=> Restoring the last backup...\n\n"$N; sleep 1;
-			BCK_TO_RESTORE=$(ls -A1 "$MAGMOD/Backup_$APPLINE2REM*.csv")
-			
-			# Restore backup data to DB File
-			tableName=$(head -n 1 /sdcard/a.csv | sed 's/,/;/g')
-			DATAS_DB=$("$MAGMOD/sqlite" /sdcard/library.db "SELECT * FROM ownership WHERE doc_id = '$APPLINE2REM';")
-			
-			sed -i -e '1d' "$BCK_TO_RESTORE"
-			(echo .separator ";"; echo .import "$BCK_TO_RESTORE" ownership) | "$MAGMOD/sqlite" "$PS_DATA_PATH"
 
-			for name in "$tableName";
-				do if [ $($echo "$DATAS_DB") -eq "$APPLINE2REM" ]; then
-					"$MAGMOD/sqlite" /sdcard/library.db "UPDATE ownership SET "$name" = null WHERE "$name" = '';"
-				fi
-			done
+			echo -e $R"\n\nYour app will appear again in Play Store app within 48 hrs.\n\n"$N; sleep 3; exit ;
 			
 	;;
 	N|n|No|no|NO|Na|na) 
@@ -534,7 +510,6 @@ esac
 
 	exit
 }
-
 
 # Kill PS app
 k() {
