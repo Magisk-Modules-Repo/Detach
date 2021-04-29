@@ -480,7 +480,7 @@ done
 
 printf '%s\n' "$FINAL_PACKS" | while IFS= read -r line
 	do
-		echo -e "	$SQLITE/sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$line'\";\n" >> "$FINALCUST"
+		echo -e "	\$SQLITE/sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$line'\";\n" >> "$FINALCUST"
 done
 
 cat "$FINALCUST" >> "$SERVICESH"
