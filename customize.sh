@@ -567,7 +567,7 @@ if grep -q "$wrong_result" "$TMPDIR/first_detach_result.txt"; then
 	am force-stop com.android.vending
 	
 	FIRST_PCK_NAME=$(head -n 1 "$ACTAPPS")
-	PRESENT_DIR=$(pwd)
+	PRESENT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 	SQL_ENTRY_TEST=$(cd $TMPDIR && $SQLITE/sqlite $PLAY_DB_DIR/library.db "SELECT * FROM ownership WHERE doc_id = '${FIRST_PCK_NAME}' AND library_id='3'" | wc -l)
 	cd "$PRESENT_DIR"
 	ZERO=0
