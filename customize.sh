@@ -21,12 +21,33 @@ pre_request() {
 ui_print
 ui_print "- Extracting module files"
 [ ! -d "$MODPATH/system/bin" ] && mkdir -p "$MODPATH/system/bin"
-unzip -o "$ZIPFILE" module.prop service.sh main.sh appslist.csv sepolicy.rule compatibility.txt sqlite sqlite.txt 'system/*' -x LICENSE .gitattributes README.md -d "$TMPDIR" 1>/dev/null
+
+#Store sqlite based on CPU Arc.	
+	case $ARCH in
+		arm|ARM|Arm)
+				
+			sqlite3=sqlite_arm
+		;;
+		arm64|ARM64|Arm64)
+		
+			sqlite3=sqlite_arm64
+		;;
+		x86|X86)
+		
+		sqlite3=sqlite_x86
+		;;
+		x64|X64)
+			sqlite3=sqlite_x64
+		;;
+	esac
+			
+unzip -o "$ZIPFILE" module.prop service.sh main.sh appslist.csv sepolicy.rule compatibility.txt "$sqlite3" sqlite.txt 'system/*' -x LICENSE .gitattributes README.md -d "$TMPDIR" 1>/dev/null
 
 [ ! -e "$TMPDIR/system/bin/Detach" ] && unzip -o "$ZIPFILE" 'system/system/bin/Detach' "$TMPDIR/system/bin/Detach"
 
-#sed -i "8i\MODDIR=$baseDir" "$TMPDIR/system/bin/Detach"
-#sed -i "231i\MODDIR=$baseDir" "$TMPDIR/system/bin/Detach"
+#Rename sqlite_* to default name
+mv -f "$TMPDIR/$sqlite3" "$TMPDIR/sqlite" 
+
 #now copy it to it's location
 cp -af "$TMPDIR/system/bin/Detach" "$MODPATH/system/bin/Detach"
 #Write MODDIR=data/adb/modules/Detach
@@ -79,8 +100,6 @@ SQLITE=$TMPDIR
 if [ "$CONF" != "/sdcard/Detach.txt" -o "$CONF" != "/storage/emulated/0/Detach.txt" ]; then
 mv -f "$CONF" /sdcard/Detach.txt
 fi
-
-CONF=$(ls /sdcard/Detach.txt || ls /storage/emulated/0/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 
 # Check for bad syntax in the Detach.txt file due to wrong config in some BETAs versions
 sed -n '5,40p' "$CONF" >> "$TMPDIR/SYN_CONF.txt"
