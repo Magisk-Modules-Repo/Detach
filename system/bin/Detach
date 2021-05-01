@@ -299,7 +299,8 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 				else
 					#result not found
 					#only add if not available
-					echo -e  $G"\n- Enable $TOADD in your $CONF file as Common app\n"$N; sleep 2;
+					echo -e  $G"\n- Enabling $TOADD in your $CONF file as Other applications app\n"$N; sleep 2;
+					grep -qF -- "# Other applications" "$CONF" || echo "# Other applications" >> "$CONF"
 					grep -qF -- "$TOADD" "$CONF" || echo "$TOADD" >> "$CONF"
 				fi
 					
@@ -511,6 +512,7 @@ echo -e $B"\nExit...\n"$N; sleep 1;
 
 	exit
 }
+
 
 # Kill PS app
 k() {
