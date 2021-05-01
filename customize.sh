@@ -138,7 +138,7 @@ CONF_CHECK1=$(cat "$CONF" | grep 'Detach Market Apps Configuration')
 CONF_CHECK2=$(cat "$CONF" | grep 'Remove comment (#) to detach an App.')
 CONF_CHECK3=$(wc -l "$CONF" | sed "s| $CONF||")
 
-if [ ! "$CONF_CHECK1" -o ! "$CONF_CHECK2" -o "$CONF_CHECK3" -lt "40" -a "$BOOT_TWRP" = 0 ]; then
+if [ ! "$CONF_CHECK1" -o ! "$CONF_CHECK2" -o "$CONF_CHECK3" -lt "41" -a "$BOOT_TWRP" = 0 ]; then
 	ui_print "!- Make sure you have the original 'Detach.txt' file"; sleep 1;
 	ui_print "=> Download the original 'Detach.txt' file"
 	am start -a android.intent.action.VIEW -d https://raw.githubusercontent.com/sobuj53/Detach/master/Detach.txt
@@ -154,28 +154,38 @@ ui_print "- Checks beginning"; sleep 1;
 
 # Checks for custom packages names
 # Check if line 46 of Detach.txt for custom packages is writed or not
-custom_check=$(tail -n +46 "$CONF" | grep '[a-zA-Z]')
+line_no=$(grep -n '# Other applications' $CONF | cut -d: -f 1)
+line_no=$((line_no+1))
+
+
+custom_check=$(tail -n +"$line_no" "$CONF" | grep '[a-zA-Z]')
 # ------------------------------------------------------------------------------------
 
-
+#not required anymore
 # Check if there is too much spaces in custom packages from user input
-SPACES=$(sed -n '/^# Other applications/,$p' "$CONF" | sed 's/\# Other applications//' | grep '[a-zA-Z]')
+#SPACES=$(sed -n '/^# Other applications/,$p' "$CONF" | sed 's/\# Other applications//' | grep '[a-zA-Z]')
 
-if [ $(echo "$SPACES" | grep '[:blanck:]\.') ] || [ $(echo "$SPACES" | grep '. ') ] || [ $(echo "$SPACES" | grep '[[:space:]][[:space:]]')]; then
-	sed -i -e 's/ ././' -e 's/. /./' -e 's/ \+//' "$CONF" 2>/dev/null
-fi
+#if [ $(echo "$SPACES" | grep '[:blanck:]\.') ] || [ $(echo "$SPACES" | grep '. ') ] || [ $(echo "$SPACES" | grep '[[:space:]][[:space:]]')]; then
+#	sed -i -e 's/ ././' -e 's/. /./' -e 's/ \+//' "$CONF" 2>/dev/null
+#fi
 # ------------------------------------------------------------------------------------
-
-
 
 # Exist in detach.txt or custom packages
 # Check if one of custom packages names exist in the detach.txt file (to avoid duplicates)
 COMPARE_MAIN=$TMPDIR/COMPARE_MAIN.txt
 COMPARE_CUSTOM=$TMPDIR/COMPARE_CUSTOM.txt
 
+#get second last line number
+match_line=$(sed '/# Other applications/q' "$CONF")
+search=$(echo "$match_line" | awk 'NF { a=b ; b=$0 } END { print a }')
+lines_no=$(grep -n "${search}" $CONF | cut -d: -f 1)
+
+lines_no=$((line_no-lines_no-1))
+
+
 for v in "$COMPARE_MAIN" "$COMPARE_CUSTOM"; do touch "$v" && chmod 0644 "$v"; done
 
-cat "$CONF" | tail -n +5 | sed '1,/\# Other applications/!d' | sed 's/# Other applications//' |  grep -v -e "#.*" | grep '[A-Za-z0-9]' > "$COMPARE_MAIN"
+cat "$CONF" | tail -n +"$lines_no" | sed '1,/\# Other applications/!d' | sed 's/# Other applications//' |  grep -v -e "#.*" | grep '[A-Za-z0-9]' > "$COMPARE_MAIN"
 sed -n '/# Other applications/,$p' "$CONF" | sed '1d' > "$COMPARE_CUSTOM"
 
 # Check if there is/are duplicate(s) in the Common=Main apps
@@ -530,10 +540,7 @@ if [ "$ps_accounts" -gt "1" ]; then
 	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${TMPDIR}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" > "$instant_run_two"
 	am force-stop com.android.vending
 	for i in {1..${ps_accounts_final}}; do sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
-	#sed -i -e "s/.$(echo a | tr 'a' '\t')\/sqlite/\$SQLITE\/sqlite/" "$instant_run_two"
-	#sed -i -e 's/..\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
-	#sed -i -e 's/.\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
-	#sed -i -e "s/SQLITE=\$MODDIR.\/sqlite//" "$instant_run_two"
+
 	echo -e '\n' >> "$instant_run_two"
 	sh "$instant_run_two"
 	
@@ -635,11 +642,6 @@ ui_print "- Finish the script file..";sleep 1;
 
 cat "$TMPDIR/compatibility.txt" >> "$SERVICESH"
 
-#echo "" >> "$SERVICESH"
-#echo "# Exit" >> "$SERVICESH"
-#echo " fi" >> "$SERVICESH"
-#echo "done &)" >> "$SERVICESH"
-#echo "}" >> "$SERVICESH"
 cp -af "$SERVICESH" "$MODPATH/main.sh"
 chmod 0755 "$MODPATH/main.sh" && chmod +x "$MODPATH/main.sh"
 
@@ -665,22 +667,32 @@ SIMPLE=/sdcard/simple_mode.txt
 
 test -e "$SIMPLE" && simple_mode_pre_request
 # ----------------------------------
+#get # Other applications line number
+line_no=$(grep -n '# Other applications' $CONF | cut -d: -f 1)
+
+
+#how many line before the Other applications line
+match_line=$(sed '/# Other applications/q' "$CONF")
+search=$(echo "$match_line" | awk 'NF { a=b ; b=$0 } END { print a }')
+lines_no=$(grep -n "${search}" $CONF | cut -d: -f 1)
+lines_no=$((line_no-lines_no))
 
 # Check for basics and/or customs
-CHECK=$(cat "$CONF" | tail -n +5 | sed -n '/# Other applications/q;p' | grep -v -e "#.*" | grep '[A-Za-z0-9]')
+CHECK=$(cat "$CONF" | tail -n +"$lines_no" | sed -n '/# Other applications/q;p' | grep -v -e "#.*" | grep '[A-Za-z0-9]')
 
 # Check if basics apps in Detach.txt file are ready or not
 test "$CONF_BAD" && abort "!- WARNING: You basic applications list contain '.' symbol, delete them and try again."
 
 
-CHECK_OTHER=$(sed -n 45p "$CONF")
+CHECK_OTHER=$(sed -n "$line_no"p "$CONF")
 RIGHT_OTHER="# Other applications"
 if [ "$CHECK_OTHER" != "$RIGHT_OTHER" ]; then
 	unset CHECK_OTHER
 fi
 
+line_no=$((line_no+1))
 
-CHECK_PACKAGES=$(cat "$CONF" | tail -n +46 | grep '[0-9A-Za-z]')
+CHECK_PACKAGES=$(cat "$CONF" | tail -n +"$line_no" | grep '[0-9A-Za-z]')
 
 # Checks for Detach.txt file
 simple_mode_checks
