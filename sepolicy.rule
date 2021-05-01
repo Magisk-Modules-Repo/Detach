@@ -1,0 +1,4 @@
+#!/system/xbin/busybox sh
+# Enabling Magisk SELinux Policy for using Detach without permissive mode
+
+magiskpolicy --live "allow system_server system_file file *"
