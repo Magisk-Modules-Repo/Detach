@@ -435,6 +435,8 @@ SERVICESH=$MAGMOD/main.sh
 ACTAPPS=$MAGMOD/actapps.txt
 ACTAPPSRD=$MAGMOD/actapps_ready.txt
 SERVICESHFN=$MAGMOD/final_service.sh
+applist=$MAGMOD/appslist.csv
+CONF=$(ls /sdcard/Detach.txt || ls /storage/emulated/0/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 [ -e "$ACTAPPSRD" ] | rm -f "$ACTAPPSRD"
 touch "$ACTAPPSRD"
 chmod 0644 "$ACTAPPSRD"
@@ -456,10 +458,10 @@ printf '%s\n' "$ACTAPPS" | while IFS= read -r line
 	echo -e "\n$divider\n"
 done
 
-echo -e $B"\nWich app do you want to remove ?\n(Type a part or the name or the complete name)"$N
+echo -e $B"\nWich app do you want to remove ?\n(Type a part or the name or the complete name.\n)"$N
 read TODEL
 	
-echo -e $G"\n\nSearch for the name...\n"$N; sleep 2;
+echo -e $G"\n\nSearching for the name...\n"$N; sleep 2;
 	
 APPLINE2REM=$(grep "$TODEL" "$ACTAPPS")
 APPLINENUM=$(grep -n "$APPLINE2REM" "$SERVICESH" | sed "s/:.*//")
@@ -483,6 +485,23 @@ case $CONFTODEL in
 			sed -i -e "${APPTOREMPREVIOUS}d" "$SERVICESH"
 			echo -e $G"\n$APPLINE2REM has been deleted\n"$N; sleep 1;
 			
+			#comment the app in Detach.txt file
+			pkgName=$(grep -wr "$APPLINE2REM" $applist | cut -d, -f2 | grep . || echo "N/A")
+			
+			if [ "$pkgName" != "N/A" ]; then
+				#add # infron of app name
+				#get line number in detach.txt
+				BASIC_NUMBER=$(sed 's/^#//g' "$CONF" | grep -no "$pkgName" | cut -f1 -d: | sort -u)	
+				sed -i -e "${BASIC_NUMBER}s/${pkgName}/#${pkgName}/" "$CONF"
+
+			else
+				#result not found
+				#get line number in detach.txt
+				#only add if not available
+				grep -qF -- "# Other applications" "$CONF" || echo "# Other applications" >> "$CONF"
+				sed -i -e 's/'"^${APPLINE2REM}"'/'"#${APPLINE2REM}"'/g' "$CONF"
+			fi
+								
 			# Import data (extracted from DB file during module setup) to DB file
 			# Check
 
@@ -512,6 +531,7 @@ echo -e $B"\nExit...\n"$N; sleep 1;
 
 	exit
 }
+
 
 # Kill PS app
 k() {
