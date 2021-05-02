@@ -293,7 +293,8 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 					#remove # infron of app name
 					#get line number in detach.txt
 					echo -e  $G"\n- Uncommenting $pkgName in your $CONF file\n"$N; sleep 2;
-					sed -i -e 's/'"^#${pkgName}"'/'"${pkgName}"'/g' "$CONF"
+					BASIC_NUMBER=$(sed 's/^#//g' "$CONF" | grep -no "$pkgName" | cut -f1 -d: | sort -u)	
+					sed -i -e "${BASIC_NUMBER}s/#${pkgName}/${pkgName}/" "$CONF"
 
 				else
 					#result not found
@@ -304,8 +305,12 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 				fi
 					
 				# Just paste after last match of $SQLITE/sqlite \\t is for tab
-				
-				grep -qF -- "$app_name" "$SERVICESH" || sed -i -e '/^[[:blank:]]*$SQLITE\/sqlite/a \\n \\t'"${app_name}" "$SERVICESH"
+				#need furtehr insvestigations
+				grep -qF -- "$app_name" "$SERVICESH" || sed -i -e "$(grep -n '^[[:blank:]]*$SQLITE/sqlite' $SERVICESH |tail -1|cut -f1 -d':')a \\n \\t $app_name" "$SERVICESH"
+				sleep 1
+				#if user starts with blank detach file this will make sure to add app starting from line 33
+				grep -qF -- "$app_name" "$SERVICESH" || sed -i -e "33i\		${app_name}" "$SERVICESH"
+			
 				
 				su -c sh $servicefile
 			else
