@@ -102,7 +102,7 @@ mv -f "$CONF" /sdcard/Detach.txt
 fi
 
 # Check for bad syntax in the Detach.txt file due to wrong config in some BETAs versions
-sed -n '5,40p' "$CONF" >> "$TMPDIR/SYN_CONF.txt"
+sed -n '5,41p' "$CONF" >> "$TMPDIR/SYN_CONF.txt"
 
 grep -q '\.' "$TMPDIR/SYN_CONF.txt"; if [ $? -eq 0 ]; then
 	ui_print ""
