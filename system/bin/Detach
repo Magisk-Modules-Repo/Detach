@@ -95,7 +95,7 @@ Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
 echo -e $C"\nDetach $Detach_version\n\nDetach work in progress..."$N
 
 # Check for bad syntax in the Detach.txt file due to wrong config in some BETAs versions
-sed -n '5,40p' "$CONF" >> "$MAGMOD/SYN_CONF.txt"
+sed -n '5,41p' "$CONF" >> "$MAGMOD/SYN_CONF.txt"
 
 grep -q '\.' "$MAGMOD/SYN_CONF.txt"; if [ $? -eq 0 ]; then
 	echo -e $R"!- You "$CONF" file contain error(s), please use the default one to remove the errors and try again."$N
@@ -292,9 +292,8 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 				if [ "$pkgName" != "N/A" ]; then
 					#remove # infron of app name
 					#get line number in detach.txt
-					BASIC_NUMBER=$(sed 's/^#//g' "$CONF" | grep -no "$pkgName" | cut -f1 -d: | sort -u)	
 					echo -e  $G"\n- Uncommenting $pkgName in your $CONF file\n"$N; sleep 2;
-					sed -i -e "${BASIC_NUMBER}s/#${pkgName}/${pkgName}/" "$CONF"
+					sed -i -e 's/'"^#${pkgName}"'/'"${pkgName}"'/g' "$CONF"
 
 				else
 					#result not found
@@ -305,8 +304,8 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 				fi
 					
 				# Just paste after last match of $SQLITE/sqlite \\t is for tab
-			
-				grep -qF -- "$app_name" "$SERVICESH" || sed -i -e "$(grep -n '^[[:blank:]]*$SQLITE/sqlite' $SERVICESH |tail -1|cut -f1 -d':')a \\n \\t $app_name" "$SERVICESH"
+				
+				grep -qF -- "$app_name" "$SERVICESH" || sed -i -e '/^[[:blank:]]*$SQLITE\/sqlite/a \\n \\t'"${app_name}" "$SERVICESH"
 				
 				su -c sh $servicefile
 			else
@@ -487,12 +486,11 @@ case $CONFTODEL in
 			
 			#comment the app in Detach.txt file
 			pkgName=$(grep -wr "$APPLINE2REM" $applist | cut -d, -f2 | grep . || echo "N/A")
-			
+
 			if [ "$pkgName" != "N/A" ]; then
 				#add # infron of app name
 				#get line number in detach.txt
-				BASIC_NUMBER=$(sed 's/^#//g' "$CONF" | grep -no "$pkgName" | cut -f1 -d: | sort -u)	
-				sed -i -e "${BASIC_NUMBER}s/${pkgName}/#${pkgName}/" "$CONF"
+				sed -i -e 's/'"^${pkgName}"'/'"#${pkgName}"'/g' "$CONF"
 
 			else
 				#result not found
