@@ -692,7 +692,7 @@ fi
 
 line_no=$((line_no+1))
 
-CHECK_PACKAGES=$(cat "$CONF" | tail -n +"$line_no" | grep '[0-9A-Za-z]')
+CHECK_PACKAGES=$(cat "$CONF" | tail -n +"$line_no" | grep -v '^#' | grep '[0-9A-Za-z]')
 
 # Checks for Detach.txt file
 simple_mode_checks
