@@ -293,9 +293,12 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 					#remove # infron of app name
 					#get line number in detach.txt
 					echo -e  $G"\n- Uncommenting $pkgName in your $CONF file\n"$N; sleep 2;
-					BASIC_NUMBER=$(sed 's/^#//g' "$CONF" | grep -no "$pkgName" | cut -f1 -d: | sort -u)	
-					sed -i -e "${BASIC_NUMBER}s/#${pkgName}/${pkgName}/" "$CONF"
-
+					BASIC_NUMBER=$(sed 's/^#//g' "$CONF" | grep -noFx "$pkgName" | cut -f1 -d: | sort -u)
+					
+					if [ "$BASIC_NUMBER" != "" ]; then
+						sed -i -e "${BASIC_NUMBER}s/#${pkgName}/${pkgName}/" "$CONF"
+					fi
+					
 				else
 					#result not found
 					#only add if not available
@@ -495,7 +498,11 @@ case $CONFTODEL in
 			if [ "$pkgName" != "N/A" ]; then
 				#add # infron of app name
 				#get line number in detach.txt
-				sed -i -e 's/'"^${pkgName}"'/'"#${pkgName}"'/g' "$CONF"
+				BASIC_NUMBER=$(grep -noFx "$pkgName" "$CONF" | cut -f1 -d: | sort -u)
+
+				if [ "$BASIC_NUMBER" != "" ]; then
+					sed -i -e "${BASIC_NUMBER}s/$pkgName/#$pkgName/"  "$CONF"
+				fi
 
 			else
 				#result not found
