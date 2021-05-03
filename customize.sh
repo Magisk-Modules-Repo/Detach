@@ -40,8 +40,8 @@ ui_print "- Extracting module files"
 			sqlite3=sqlite_x64
 		;;
 	esac
-			
-unzip -o "$ZIPFILE" module.prop service.sh main.sh appslist.csv sepolicy.rule compatibility.txt "$sqlite3" sqlite.txt 'system/*' -x LICENSE .gitattributes README.md -d "$TMPDIR" 1>/dev/null
+
+unzip -o "$ZIPFILE" module.prop service.sh main.sh appslist.csv sepolicy.rule Detach.txt compatibility.txt "$sqlite3" sqlite.txt 'system/*' -x LICENSE .gitattributes README.md -d "$TMPDIR" 1>/dev/null			
 
 [ ! -e "$TMPDIR/system/bin/Detach" ] && unzip -o "$ZIPFILE" 'system/system/bin/Detach' "$TMPDIR/system/bin/Detach"
 
@@ -97,16 +97,34 @@ SERVICESH=$TMPDIR/main.sh
 CONF=$(ls /sdcard/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 SQLITE=$TMPDIR
 
-if [ "$CONF" != "/sdcard/Detach.txt" -o "$CONF" != "/storage/emulated/0/Detach.txt" ]; then
-mv -f "$CONF" /sdcard/Detach.txt
+if [ -d "/storage/emulated/0" ] 
+then
+    DetachFile=/storage/emulated/0/Detach.txt
+else
+    DetachFile=/sdcard/Detach.txt
 fi
+
+if [ ! -e "$CONF" ]; then
+
+	echo -e "!!! Your Detach.txt file does not exist !!!"
+	echo -e "!!! Copying Detach file to your storage root!!!"
+	cp -af "$TMPDIR/Detach.txt" "$DetachFile"
+	echo -e "***After reboot add app using su -c detach -a"
+fi
+
+if [ "$CONF" != "/sdcard/Detach.txt" -o "$CONF" != "/storage/emulated/0/Detach.txt" ]; then
+	mv -f "$CONF" "$DetachFile"
+fi
+
 
 # Check for bad syntax in the Detach.txt file due to wrong config in some BETAs versions
 sed -n '5,41p' "$CONF" >> "$TMPDIR/SYN_CONF.txt"
 
 grep -q '\.' "$TMPDIR/SYN_CONF.txt"; if [ $? -eq 0 ]; then
 	ui_print ""
-	ui_print "!- You "$CONF" file contain error(s), please use the default one to remove the errors and try again."
+	ui_print "!- You "$CONF" file contain error(s)"
+	ui_print "Now copying new Detach file, check and try again."
+	cp -afr "$TMPDIR/Detach.txt" "$DetachFile"
 	ui_print ""
 	CONF_BAD=1
 fi
@@ -121,6 +139,7 @@ if [ -e "$UP_SERVICESSH" ] && test ! "$CONF_BAD"; then
 	fi
 fi
 
+rm -rf "$TMPDIR/Detach.txt" && rm -rf "$MODPATH/Detach.txt"
 
 sleep 1;
 test ! "$CONF_BAD" && ui_print "- Prepare done" || abort '- Wrong module setup'
