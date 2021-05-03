@@ -108,7 +108,7 @@ if [ ! -e "$CONF" ]; then
 	echo -e "!!! Your Detach.txt file does not exist !!!"
 	echo -e "!!! Copying Detach file to your storage root!!!"
 	cp -af "$TMPDIR/Detach.txt" "$DetachFile"
-	ui_print "location "$CONF""
+	echo -e "\nLocation: "$CONF"\n"
 	echo -e "Check your Detach file and uncomment desired app"
 	abort Fail
 	
@@ -124,7 +124,7 @@ sed -n '5,41p' "$CONF" >> "$TMPDIR/SYN_CONF.txt"
 
 grep -q '\.' "$TMPDIR/SYN_CONF.txt"; if [ $? -eq 0 ]; then
 	ui_print ""
-	ui_print "!- You "$CONF" file contain error(s)"
+	echo -e "!- Your "$CONF" file contain error(s)"
 	ui_print "Now copying new Detach file, check and try again."
 	cp -afr "$TMPDIR/Detach.txt" "$DetachFile"
 	ui_print ""
