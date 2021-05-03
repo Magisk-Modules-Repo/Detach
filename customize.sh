@@ -55,7 +55,6 @@ baseDir=$(echo $MODPATH | sed s/"_update"//)
 sed  -i -e 's~^MODDIR.*$~MODDIR='"${baseDir}"'~g' "$MODPATH/system/bin/Detach"
 
 rm -f "$TMPDIR/LICENCE" && rm -f "$MODPATH/LICENCE"
-rm -f "$TMPDIR/Detach.txt" && rm -f "$MODPATH/Detach.txt"
 rm -f "$TMPDIR/.gitattributes" && rm -f "$MODPATH/.gitattributes"
 
 [ ! -e "$TMPDIR/sqlite" ] && abort 'sqlite no exist!'
