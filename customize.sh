@@ -108,7 +108,7 @@ if [ ! -e "$CONF" ]; then
 	echo -e "!!! Your Detach.txt file does not exist !!!"
 	echo -e "!!! Copying Detach file to your storage root!!!"
 	cp -af "$TMPDIR/Detach.txt" "$DetachFile"
-	echo -e "\nLocation: "$CONF"\n"
+	echo -e "\nLocation: "$DetachFile"\n"
 	echo -e "Check your Detach file and uncomment desired app"
 	abort Fail
 	
