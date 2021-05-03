@@ -108,7 +108,10 @@ if [ ! -e "$CONF" ]; then
 	echo -e "!!! Your Detach.txt file does not exist !!!"
 	echo -e "!!! Copying Detach file to your storage root!!!"
 	cp -af "$TMPDIR/Detach.txt" "$DetachFile"
-	echo -e "***After reboot add app using su -c detach -a"
+	ui_print "location "$CONF""
+	echo -e "Check your Detach file and uncomment desired app"
+	abort Fail
+	
 fi
 
 if [ "$CONF" != "/sdcard/Detach.txt" -o "$CONF" != "/storage/emulated/0/Detach.txt" ]; then
