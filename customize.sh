@@ -72,7 +72,7 @@ ln -sf Detach "$MODPATH/system/bin/detach"
 Detach_version=$(grep 'version=.*' "$TMPDIR/module.prop" | sed 's/version=//')
 ui_print " "
 ui_print "- Detach $Detach_version"
-ui_print "- By Rom @ xda-developers"
+ui_print "- By Rom, Sobuj53 @ xda-developers"
 ui_print " "
 ui_print "- Checking pre-requests"
 sleep 1;
@@ -107,7 +107,7 @@ if [ ! -e "$CONF" ]; then
 
 	echo -e "!!! Your Detach.txt file does not exist !!!"
 	echo -e "!!! Copying Detach file to your storage root!!!"
-	cp -af "$TMPDIR/Detach.txt" "$DetachFile"
+	cp -fr "$TMPDIR/Detach.txt" "$DetachFile"
 	echo -e "\nLocation: "$DetachFile"\n"
 	echo -e "Check your Detach file and uncomment desired app"
 	abort Fail
@@ -126,7 +126,7 @@ grep -q '\.' "$TMPDIR/SYN_CONF.txt"; if [ $? -eq 0 ]; then
 	ui_print ""
 	echo -e "!- Your "$CONF" file contain error(s)"
 	ui_print "Now copying new Detach file, check and try again."
-	cp -afr "$TMPDIR/Detach.txt" "$DetachFile"
+	cp -fr "$TMPDIR/Detach.txt" "$DetachFile"
 	ui_print ""
 	CONF_BAD=1
 fi
@@ -471,7 +471,7 @@ cat "$DETACH" >> "$SERVICESH"
 echo " " >> "$SERVICESH"
 # rm -f $DETACH
 sleep 1;
-ui_print "- The hidden of basic applications is done.";sleep 1;
+ui_print "-Hiding of basic applications is done.";sleep 1;
 }
 
 
