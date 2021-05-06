@@ -111,6 +111,7 @@ if [ ! -e "$CONF" ]; then
 	echo -e "\nLocation: "$DetachFile"\n"
 	echo -e "Check your Detach file and uncomment desired app"
 	abort Fail
+	CONF_BAD=1
 	
 fi
 
@@ -131,6 +132,19 @@ grep -q '\.' "$TMPDIR/SYN_CONF.txt"; if [ $? -eq 0 ]; then
 	CONF_BAD=1
 fi
 
+#check if new detach file is present or not
+old_file=$(sed -n '5,41p;42q' "$CONF" | sed 's/^#//g')
+new_file=$(sed -n '5,41p;42q' "$TMPDIR/Detach.txt" | sed 's/^#//g')
+
+if [ "$old_file" != "$new_file" ]; then
+	ui_print ""
+	echo -e "!- Your "$CONF" file is old"
+	ui_print "Now copying new Detach file, check and try again."
+	cp -fr "$TMPDIR/Detach.txt" "$DetachFile"
+	ui_print ""
+	CONF_BAD=1
+   
+fi
 
 UP_SERVICESSH=$MODPATH/main.sh
 if [ -e "$UP_SERVICESSH" ] && test ! "$CONF_BAD"; then
@@ -174,7 +188,7 @@ simple_mode_checks() {
 ui_print "- Checks beginning"; sleep 1;
 
 # Checks for custom packages names
-# Check if line 46 of Detach.txt for custom packages is writed or not
+# Check if line 46 of Detach.txt for custom packages is written or not
 line_no=$(grep -n '# Other applications' $CONF | cut -d: -f 1)
 line_no=$((line_no+1))
 
