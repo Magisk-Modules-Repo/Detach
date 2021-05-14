@@ -4,9 +4,11 @@
 # Created by Rom@xda-developers
 
 menu() {
-# Initial stuff
-MAGIMG=/data/adb/modules
-
+# Initial stuff and this is reserved place for MODDIR
+MODDIR=/data/adb/modules/Detach
+#get previous directory, similar to MAGIMG=/data/adb/modules, 
+#this will be changed at installation run time
+MAGIMG="$(dirname "$MODDIR")"
 # Colors
 BL='\e[01;90m' > /dev/null 2>&1; # Black
 R='\e[01;91m' > /dev/null 2>&1; # Red
@@ -20,14 +22,16 @@ LG='\e[01;37m' > /dev/null 2>&1; # Light Gray
 N='\e[0m' > /dev/null 2>&1; # Null
 
 #Detach Directory
-MAGMOD=$MAGIMG/Detach
+MAGMOD=$MODDIR
 #Boot service directory
-SERVICESH=$MAGMOD/service.sh
+SERVICESH=$MAGMOD/main.sh
 SILENT=$MAGMOD/silent
+SQLITE=$MAGMOD
 
 #crond schedule file
 cronsfile=$MAGMOD/crons/root
 cronsDir=$MAGMOD/crons
+servicefile=$MAGMOD/service.sh
 
 #log file location
 if [ -d "/storage/emulated/0" ] 
@@ -49,10 +53,10 @@ fi
 # The selinux state need to be in 'Permissive' mode, because this script use the 'am' shell command under Android 8 and higher because of it's selinux rules.
 # On Android 8 and higher if the selinux status is in 'Enforcing' mode, the selinux rules don't allow/prevent apps from killing/stopping other process through am command.
 # It's why we set temporary set the selinux state in permissive mode if it's state is in enforcing mode, and restore it in it initial state at the end.
-SELINUX_STATUT=$(getenforce)
-if [ "$SELINUX_STATUT" = "Enforcing" ]; then
-	setenforce 0
-fi
+#SELINUX_STATUT=$(getenforce)
+#if [ "$SELINUX_STATUT" = "Enforcing" ]; then
+#	setenforce 0
+#fi
 
 
 Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
@@ -80,11 +84,18 @@ esac
 
 # Instant Detach
 ida() {
+MODDIR=/data/adb/modules/Detach
+#Detach Directory
+MAGMOD=$MODDIR
+#Boot service directory
+SERVICESH=$MAGMOD/main.sh
+CONF=$(ls /sdcard/detach.txt || ls /sdcard/Detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
+
 Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
 echo -e $C"\nDetach $Detach_version\n\nDetach work in progress..."$N
 
 # Check for bad syntax in the Detach.txt file due to wrong config in some BETAs versions
-sed -n '5,40p' "$CONF" >> "$MAGMOD/SYN_CONF.txt"
+sed -n '5,41p' "$CONF" >> "$MAGMOD/SYN_CONF.txt"
 
 grep -q '\.' "$MAGMOD/SYN_CONF.txt"; if [ $? -eq 0 ]; then
 	echo -e $R"!- You "$CONF" file contain error(s), please use the default one to remove the errors and try again."$N
@@ -102,31 +113,34 @@ ps_accounts=$("$MAGMOD/sqlite" $PS_DATA_PATH "SELECT account FROM ownership" | s
 ps_accounts_final=$((ps_accounts+1))
 
 cat /dev/null > "$instant_run"
-echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGIMG/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$instant_run"
+echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGMOD\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$instant_run"
 
-egrep "^[[:space:]]*./sqlite" "$SERVICESH" >> "$instant_run"
+#egrep "^[[:space:]]*$SQLITE/sqlite" "$SERVICESH" >> "$instant_run"
+sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$instant_run"
 
 echo -e "\n" >> "$instant_run"
 
 # test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
 # chmod 0644 "$MAGMOD/first_detach_result.txt"
-sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
+ su -c sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
 
 if [ "$ps_accounts" -gt "1" ]; then
 	test -e "$instant_run_two" || touch "$instant_run_two"
 	chmod 0644 "$instant_run_two"
-	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGIMG/Detach\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" > "$instant_run_two"
+	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=$MAGMOD\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" > "$instant_run_two"
 	am force-stop com.android.vending
-	for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" > "$instant_run_two"; done
-	sed -i -e 's/.\t\/sqlite/.\/sqlite/' "$instant_run_two"
-	sed -i -e 's/..\/sqlite/.\/sqlite/' "$instant_run_two"
-	sed -i -e "s/SQLITE=\$MODDIR.\/sqlite//" "$instant_run_two"
+	sleep 1
+	for i in {1..${ps_accounts_final}}; do sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
+	#sed -i -e "s/.$(echo a | tr 'a' '\t')\/sqlite/\$SQLITE\/sqlite/" "$instant_run_two"
+	#sed -i -e 's/..\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
+	#sed -i -e 's/.\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
 	echo -e '\n' >> "$instant_run_two"
 	
-	sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
+	su -c sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
 fi
 
-cp -f "$instant_run" /sdcard
+#stop coping to sdcard
+#cp -f "$instant_run" /sdcard
 	
 wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
 if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
@@ -140,8 +154,8 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 	
 	PLAY_DB_DIR=/data/data/com.android.vending/databases
 	
-	awk '$1 == "./sqlite" { print; x++ } END { print x, "total matches" }' "$SERVICESH" | sed '$ d' >> "$ACTAPPS"
-	sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
+	awk '$1 == '$SQLITE/sqlite' { print; x++ } END { print x, "total matches" }' "$SERVICESH" | sed '$ d' >> "$ACTAPPS"
+	sed -i -e "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
 	# sed -i -e '1d' "$ACTAPPS"
 	sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
 		
@@ -152,7 +166,7 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 	
 	FIRST_PCK_NAME=$(head -n 1 "$ACTAPPS")
 	PRESENT_DIR=$(pwd)
-	SQL_ENTRY_TEST=$(cd $MAGMOD && ./sqlite $PS_DATA_PATH "SELECT * FROM ownership WHERE doc_id = '${FIRST_PCK_NAME}' AND library_id='3'" | wc -l)
+	SQL_ENTRY_TEST=$(cd $MAGMOD && $SQLITE/sqlite $PS_DATA_PATH "SELECT * FROM ownership WHERE doc_id = '${FIRST_PCK_NAME}' AND library_id='3'" | wc -l)
 	cd "$PRESENT_DIR"
 	ZERO=0
 	
@@ -161,19 +175,19 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 	if [ "$SQL_ENTRY_TEST" -eq 1 ]; then
 		echo -e "\ncd $MAGMOD\n\n" >> "$FINAL"
 		printf '%s\n' "$var_ACTAPPS" | while IFS= read -r line
-			do echo -e "./sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$line' AND library_id = '3'\";\n" >> "$FINAL"
+			do echo -e "$SQLITE/sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$line' AND library_id = '3'\";\n" >> "$FINAL"
 		done
 		chmod +x "$FINAL"
-		sh "$FINAL"
+		su -c sh "$FINAL"
 	else
 		echo -e "\ncd $MAGMOD\n\n" >> "$FINAL"
 		while [ "$ZERO" -le "$SQL_ENTRY_TEST" ]; do
 			printf '%s\n' "$var_ACTAPPS" | while IFS= read -r line
-				do echo -e "./sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$line' AND library_id = '3'\";\n" >> "$FINAL"
+				do echo -e "$SQLITE/sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$line' AND library_id = '3'\";\n" >> "$FINAL"
 			done
 			SQL_ENTRY_TEST=$(($SQL_ENTRY_TEST - 1))
 		done
-		sh "$FINAL"
+		su -c sh "$FINAL"
 	fi
 	
 	for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/first_detach_result.txt"; do rm -f "$f"; done
@@ -188,23 +202,22 @@ am force-stop com.android.vending
 rm -f "$MAGMOD/SYN_CONF.txt"
 
 # Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 
 # List hided apps
 list() {
 apps_list_basic=$(tail -n +32 "$SERVICESH" | grep -e "# [A-Z]" | sed 's/# Custom Packages//' | sed 's/# Multiple.*//' | sed '$ d' | sed 's/[[:blank:]]*//' | grep "# [A-Za-z0-9]" | sed 's/# //')
-apps_list_cust=$(sed -n '/# Custom Packages/,$p' $SERVICESH | egrep "^[[:space:]]*./sqlite" | sed "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" | sed "s/'\";//" | sed 's/[[:space:]]//')
+apps_list_cust=$(sed -n '/# Custom Packages/,$p' $SERVICESH | sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' |sed "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" | sed "s/'\";//" | sed 's/[[:space:]]//')
 
 echo "$apps_list_basic" >> "$MAGMOD/apps_lists.txt"
 echo "$apps_list_cust" >> "$MAGMOD/apps_lists.txt"
-
 
 FINAL_apps_list=$(awk '{ print }' "$MAGMOD/apps_lists.txt")
 
@@ -221,224 +234,216 @@ rm -f "$MAGMOD/apps_lists.txt"
 
 # Adding app
 add() {
-SERVICESH=$MAGMOD/service.sh
+#Reserved place for MODDIR line 231
+MODDIR=data/adb/modules/Detach
+MAGMOD=$MODDIR
+servicefile=$MAGMOD/service.sh
+SERVICESH=$MAGMOD/main.sh
 CONF=$(ls /sdcard/Detach.txt || ls /storage/emulated/0/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 ACT_BASIC_APPS=$MAGMOD/act_basic_apps.txt
 ACT_CUST_APPS=$MAGMOD/act_cust_apps.txt
 COMPATIBILITY=$MAGMOD/compatibility.txt
 Instant_sqlite=$MAGMOD/instant_sqlite.txt
 DL_CHECK=$MAGMOD/DL_check.txt
+backup_txt=$(date +'%m/%d/%Y')
+PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
+applist=$MAGMOD/appslist.csv
+ACTAPPS=$MAGMOD/actapps.txt
+ACTAPPSBCK=$MAGMOD/actapps.bak
+FINAL=$MAGMOD/final.sh
+PLAY_DB_DIR=/data/data/com.android.vending/databases
+instant_run=$MAGMOD/instant_run.sh
+instant_run_two=$MAGMOD/instant_run_two.sh
 
-for i in "$ACT_BASIC_APPS" "$ACT_CUST_APPS" "$Instant_sqlite"; do  [ ! -e "$i" ] && touch "$i" && chmod -R 0644 "$i"; done
+#check net connecton
+if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 
-echo -e $C"\n\nPlease write the application package name\nyou want to detach from automatic PS update\n\nPackage name: "$N
-read TOADD
+		for i in "$ACT_BASIC_APPS" "$ACT_CUST_APPS" "$Instant_sqlite"; do  [ ! -e "$i" ] && touch "$i" && chmod -R 0644 "$i"; done
 
-echo -e $C"\n\n '$TOADD' - Do you confirm ?"$N; sleep 2;
-read CONFIRMADD
-if [ $(cat "$SERVICESH" | grep "$TOADD" | sed 's/  #//') ]; then
-	echo -e $R"\n! The name that you have entered already exist in your list\n=> Type su -c Detach -a or su and Detach -a again to add another package name in your list.\n\n"$N; sleep 3;
-	exit
-fi
+		echo -e $C"\n\nPlease write the application package name\nyou want to detach from automatic PS update.\n\nPackage name: "$N
+		read TOADD
 
-if [ $(echo "$TOADD" | wc -l) -gt 1 ]; then
-	echo -e $R"\n! Please enter only one package name at a time."$N; sleep 3;
-	exit
-fi
-
-case $CONFIRMADD in
-	Y|y|Yes|yes|YES)
-	echo -e $G"\nCheck if $TOADD exist on the Play Store..."$N; sleep 1;
-	# Check if user input exist on Play Store \(WIFI and/or LTE are require\)
-	touch "$DL_CHECK" && chmod 0777 "$DL_CHECK"
-	wget --no-check-certificate -T 5 -q -O "$MAGMOD/$TOADD.html" "https://play.google.com/store/apps/details?id=$TOADD&hl=en"
-	# Check for empty HTML page = 404 = Not Found = Custom apps don't exist on the Play Store
-	if [[ $(cat "$DL_CHECK" | grep '404' | awk '{ print $1 }' 2>/dev/null) -eq "404" ]] 2>/dev/null; then
-		echo 'a2'
-		echo -e "\nWarning: The package name of the application you just\nentered does not exist in the Play Store.\n"
-		rm -f "$ACT_BASIC_APPS"
-		rm -f "$ACT_CUST_APPS"
-		rm -f "$instant_run"
-		rm -f "$Instant_sqlite"
-		exit
-	fi
-	
-	
-	# Check if the app exist on the Play Store and if yes, get official app Name
-	wget --no-check-certificate -q -O "${MAGMOD}/$TOADD.html" "https://play.google.com/store/apps/details?id=${TOADD}&hl=en" --header "header: play.google.com" 2>&1 >> "$MAGMOD/$TOADD_DL_check.txt"
-	cat "$MAGMOD/$TOADD_DL_check.txt" | grep '404' | awk '{ print $1 }' > "$MAGMOD/$TOADD_DL_final_check.txt"
-	
-	if [ -s "$MAGMOD/$TOADD_DL_final_check.txt" ]; then
-		echo -e $R"\nApparently $TOADD don't exist on the Play Store or you don't have write the name correctly..."$N; sleep 2;
-		exit
-	else
-		grep 'AHFaub' "$MAGMOD/$TOADD.html" | tail -1 | cut -f1,2,3 -d'<' | sed 's/.*>//' | sed 's/(Trial)//' | sed 's/(Trial version)//' | sed 's/-.*//' | sed 's/:.*//' | sed 's/★.*//' | sed 's/ &amp.*//' | sed 's/\|.*//' | tr -d '\n' >> "$MAGMOD/$TOADD.txt"
-	fi
-	
-	
-	# May to be a basic app... or custom packages
-	if grep -qs 'Gmail\|Google\|Google+ for G Suite\|Hangouts\|YouTube\|Gboard\|Contacts\|Phone\|Google Photos\|Clock\|Google Camera\|Google Duo\|Dropbox\|Pushbullet\|Google Calendar\|Google Keep\|Telegram\|SwiftKey Keyboard\|Google Translate\|Facebook\|Pandora\|Twitter\|Slack\|MEGA\|WhatsApp Messenger\|Google Voice\|Google Drive\|Netflix\|Pixel Launcher\|Wallpapers\|GoPro\|Google VR Services\|Google Play services\|Carrier Services' "$MAGMOD/$TOADD.txt"; then
-		CHECK_RESULT_BASICS=1
-	fi
-	
-	WEB_NAME=$(cat "$MAGMOD/$TOADD.txt")
+		echo -e $C"\n\n '$TOADD' - Do you confirm ? (yes or no)"$N; sleep 2;
+		read CONFIRMADD
 		
-	if [ "$CHECK_RESULT_BASICS" == 1 ]; then
-		# For basic
-		# Get line number of app to hide from basic list
-		BASIC_NUMBER=$(grep -no "$TOADD" "$CONF" | sed 's/:.*//')
-		echo -e "\n- Enable $TOADD in your Detach.txt file as Common app\n"; sleep 2;
-		sed -i -e "${BASIC_NUMBER}s/# ${TOADD}/${TOADD}/" "$CONF"
+		app_name="\$SQLITE/sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$TOADD'\";"
 		
-		# Grep each sqlite commands with apps titles (common apps)
-		sqlite_cmds_common=$(grep -no '# Custom Packages' "$SERVICESH" | sed 's/:.*//')
-		sqlite_cmds_final=$((sqlite_cmds_common-1))
-		sqlite_cmds_cust=$(grep -n '# Multiple' "$SERVICESH" | sed 's/:.*//')
-		sqlite_cmds_final2=$((sqlite_cmds_cust-1))
-		sed "32,$sqlite_cmds_final!d;" "$SERVICESH" | grep '[a-zA-Z0-9]' >> "$ACT_BASIC_APPS"
-		sed "$sqlite_cmds_common,$sqlite_cmds_final2!d;" "$SERVICESH" | grep '[a-zA-Z0-9]' >> "$ACT_CUST_APPS"
-		echo -e "\n	# $BASIC_NAME_LOCAL\n	./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$i'\";\n\n$TOADD\n" >> "$ACT_BASIC_APPS"
+		if grep -qF -- "$app_name" "$SERVICESH"; then
+		  	echo -e $R"\n! The name that you have entered already exist in your list\n=> Type su -c Detach -a or su and Detach -a again to add another package name in your list.\n\n"$N; sleep 3;
+			exit
+		fi
 		
-		sed -i -e '32,$d' "$SERVICESH"
-		cat "$ACT_BASIC_APPS" >> "$SERVICESH"
-		echo -e "\n\n" >> "$SERVICESH"
-		cat "$ACT_CUST_APPS" >> "$SERVICESH"
-		# Export sqlite cmds before writing all other contents in file (for Instant Run step)
-		su -c grep sqlite "$SERVICESH" | sed -i -e '1d' >> "$Instant_sqlite"
-		cat "$COMPATIBILITY" >> "$SERVICESH"
-		echo -e "\n\n# Exit\n	exit; fi\ndone &)\n" >> "$SERVICESH"
-	else
-		# For custom
-		# Grep each sqlite commands with apps titles (common apps)
-		sqlite_cmds_common=$(grep -no '# Custom Packages' "$SERVICESH" | sed 's/:.*//')
-		sqlite_cmds_final=$((sqlite_cmds_common-1))
-		sqlite_cmds_cust=$(grep -n '# Multiple' "$SERVICESH" | sed 's/:.*//')
-		sqlite_cmds_final2=$((sqlite_cmds_cust-1))
-		
-		sed "32,$sqlite_cmds_final!d;" "$SERVICESH" | grep '[a-zA-Z0-9]' >> "$ACT_BASIC_APPS"
-		sed "$sqlite_cmds_final,$sqlite_cmds_final2!d;" "$SERVICESH" | grep '[a-zA-Z0-9]' >> "$ACT_CUST_APPS"
-		echo "" >> "$ACT_CUST_APPS"
-		echo -e "\n	# $WEB_NAME\n	./sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$TOADD'\";\n\n" >> "$ACT_CUST_APPS"
-		echo "" >> "$ACT_CUST_APPS"
-		sed -i -e '32,$d' "$SERVICESH"
-		cat "$ACT_BASIC_APPS" >> "$SERVICESH"
-		echo -e "\n\n" >> "$SERVICESH"
-		cat "$ACT_CUST_APPS" >> "$SERVICESH"
-		cat "$COMPATIBILITY" >> "$SERVICESH"
-		echo -e "\n\n# Exit\n	exit; fi\ndone &)\n" >> "$SERVICESH"
-		echo -e $G"\n- Enable $WEB_NAME in your $CONF file.\n"$N
-		echo -e "$TOADD" >> "$CONF"
-	fi
-	
-	# Removing any existant backup(s) of specified app
-	ls -A1 "$MODPATH/Backup_${TOADD}*.txt" 2>/dev/null | xargs rm -f
-	
-	# Backup DB file specific datas before magic things..
-	$MAGMOD/sqlite "$PS_DATA_PATH" "SELECT * FROM ownership WHERE doc_id = '$line'" >> "$TMPDIR/Backup_$TOADD_${date +"%Y_%m_%d"}.txt"
-		
-		
-	# Instant Run
-	instant_run=$MAGMOD/instant_run.sh
-	instant_run_two=$MAGMOD/instant_run_two.sh
-	
-	test -e "$instant_run" || touch "$instant_run"
-	chmod 0777 "$instant_run" && chmod +x "$instant_run"
-	
-	PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
-	
-	# Multiple Play Store accounts compatibility
-	ps_accounts=$("$MAGMOD/sqlite" $PS_DATA_PATH "SELECT account FROM ownership" | sort -u | wc -l)
-	ps_accounts_final=$((ps_accounts+1))
-	
-	cat /dev/null > "$instant_run"
-	echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$instant_run"
-	
-	egrep "^[[:space:]]*./sqlite" "$SERVICESH" >> "$instant_run"
+		if [ $(echo "$TOADD" | wc -l) -gt 1 ]; then
+			echo -e $R"\n! Please enter only one package name at a time."$N; sleep 3;
+			exit
+		fi
 
-	echo "" >> "$instant_run"
-
-	test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
-	chmod 0644 "$MAGMOD/first_detach_result.txt"
-	sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
-
-	if [ "$ps_accounts" -gt "1" ]; then
-		test -e "$instant_run_two" || touch "$instant_run_two"
-		chmod 0644 "$instant_run_two"
-		echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" > "$instant_run_two"
-		am force-stop com.android.vending
-		for i in {1..${ps_accounts_final}}; do grep sqlite "$instant_run" > "$instant_run_two"; done
-		sed -i -e 's/.\t\/sqlite/.\/sqlite/' "$instant_run_two"
-		sed -i -e 's/..\/sqlite/.\/sqlite/' "$instant_run_two"
-		sed -i -e "s/SQLITE=\$MODDIR.\/sqlite//" "$instant_run_two"
-		echo -e '\n' >> "$instant_run_two"
-	
-		sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
-	fi
-
-	wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
+		case $CONFIRMADD in
+			Y|y|Yes|yes|YES)
+			echo -e $G"\nCheck if $TOADD exist on the Play Store..."$N; sleep 1;
 			
-	if grep "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
-		[ -e "$MAGMOD/silent" ] || echo -e $C"\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"$N; sleep 1;
-		ACTAPPS=$MAGMOD/actapps.txt
-		ACTAPPSBCK=$MAGMOD/actapps.bak
-		FINAL=$MAGMOD/final.sh
-		for o in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do touch "$o" && cat /dev/null > "$o" && chmod 0644 "$o"; done
-		grep sqlite "$instant_exit_final" > "$ACTAPPS"
-		sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
-		sed -i -e '1d' "$ACTAPPS"
-		sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
-		PLAY_DB_DIR=/data/data/com.android.vending/databases
-		cp -f "$ACTAPPS" "$ACTAPPSBCK"
-		echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\n\n" >> "$FINAL"
-		
-		var_ACTAPPS=$(awk '{ print }' "$ACTAPPSBCK")
-		for i in $(echo "$var_ACTAPPS"); do echo -e "$MAGMOD/sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$i' AND library_id = '3'\";" >> "$FINAL"; done
-		sh "$FINAL"
-		am force-stop com.android.vending
+			# Check if user input exist on Play Store \(WIFI and/or LTE are require\)
+			
+			if wget --no-check-certificate -q "https://play.google.com/store/apps/details?id=${TOADD}&hl=en" -O /dev/null 2>&1 ; then
+				#echo "URL : $URL exists..."
+				#check if we already have it in our detach file
+				pkgName=$(grep -wr "$TOADD" $applist | cut -d, -f2 | grep . || echo "N/A")
+
+				if [ "$pkgName" != "N/A" ]; then
+					#remove # infron of app name
+					#get line number in detach.txt
+					echo -e  $G"\n- Uncommenting $pkgName in your $CONF file\n"$N; sleep 2;
+					BASIC_NUMBER=$(sed 's/^#//g' "$CONF" | grep -noFx "$pkgName" | cut -f1 -d: | sort -u)
 					
-		echo -e $G"\nDetaching task done\n"$N
-	else		
-		echo -e $G"\nDone\n"$N
-	fi
-	
-	for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/second_detach_result.txt" "$instant_run_two"; do rm -f "$f"; done
-;;
-	N|n|No|no|NO) echo $R"\nCanceled\n"$N
-	exit 0
+					if [ "$BASIC_NUMBER" != "" ]; then
+						sed -i -e "${BASIC_NUMBER}s/#${pkgName}/${pkgName}/" "$CONF"
+					fi
+					
+				else
+					#result not found
+					#only add if not available
+					echo -e  $G"\n- Enabling $TOADD in your $CONF file as Other applications app\n"$N; sleep 2;
+					grep -qF -- "# Other applications" "$CONF" || echo "# Other applications" >> "$CONF"
+					grep -qF -- "$TOADD" "$CONF" || echo "$TOADD" >> "$CONF"
+				fi
+					
+				# Just paste after last match of $SQLITE/sqlite \\t is for tab
+				#need furtehr insvestigations
+				grep -qF -- "$app_name" "$SERVICESH" || sed -i -e "$(grep -n '^[[:blank:]]*$SQLITE/sqlite' $SERVICESH |tail -1|cut -f1 -d':')a \\n \\t $app_name" "$SERVICESH"
+				sleep 1
+				#if user starts with blank detach file this will make sure to add app starting from line 33
+				grep -qF -- "$app_name" "$SERVICESH" || sed -i -e "33i\		${app_name}" "$SERVICESH"
+			
 				
-;;
-	*) echo $R"\n\nINVALID ENTRY, try again.\n"$N
-;;
-esac
+				su -c sh $servicefile
+			else
+				#echo "URL : $URL doesn't exists.."
+				echo -e "\nWarning: The package name of the application you just\nentered does not exist in the Play Store.\n"
+				rm -rf "$ACT_BASIC_APPS"
+				rm -rf "$ACT_CUST_APPS"
+				rm -rf "$instant_run"
+				rm -rf "$Instant_sqlite"
+				exit
+			fi
 
-cp -f "$instant_run" /sdcard
+			# Removing any existant backup(s) of specified app
+			ls -A1 "$MAGMOD/Backup_${TOADD}*.txt" 2>/dev/null | xargs rm -f
+			
+			
+			# Backup DB file specific datas before magic things..
+			#$MAGMOD/sqlite "$PS_DATA_PATH" "SELECT * FROM ownership WHERE doc_id = '$line'" >> "$TMPDIR/Backup_$TOADD_${backup_txt}.txt"
+		
+			
+			# Instant Run
 
-	
-rm -f "$ACT_BASIC_APPS"
-rm -f "$ACT_CUST_APPS"
-# rm -f "$instant_run"
-rm -f "$Instant_sqlite"
-rm -f "$MAGMOD/first_detach_result.txt"
-rm -f $MAGMOD/*.html
-rm -f "$MAGMOD/DL_check.txt"
-rm -f "$MAGMOD/$TOADD.txt"
+			test -e "$instant_run" || touch "$instant_run"
+			chmod 0777 "$instant_run" && chmod +x "$instant_run"
+			
+			# Multiple Play Store accounts compatibility
+			ps_accounts=$("$MAGMOD/sqlite" $PS_DATA_PATH "SELECT account FROM ownership" | sort -u | wc -l)
+			ps_accounts_final=$((ps_accounts+1))
+			
+			cat /dev/null > "$instant_run"
+			echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$instant_run"
+			
+			#not needed as passing whole path 
+			test -e "$ACTAPPS" || touch "$ACTAPPS"
+			sed -n '/^[[:space:]]*$SQLITE\/sqlite.*$/p' "$SERVICESH" >> "$ACTAPPS"
+			#egrep "^[[:space:]]*$SQLITE/sqlite" "$SERVICESH" >> "$instant_run"
+			
+			echo "" >> "$instant_run"
 
-	# Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+			test -e "$MAGMOD/first_detach_result.txt" || touch "$MAGMOD/first_detach_result.txt"
+			chmod 0644 "$MAGMOD/first_detach_result.txt"
+			su -c sh "$instant_run" > "$MAGMOD/first_detach_result.txt" 2>&1
+
+			if [ "$ps_accounts" -gt "1" ]; then
+				test -e "$instant_run_two" || touch "$instant_run_two"
+				chmod 0644 "$instant_run_two"
+				echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" > "$instant_run_two"
+				am force-stop com.android.vending
+				sleep 1
+				for i in {1..${ps_accounts_final}}; do sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$instant_run" >> "$instant_run_two"; done
+				#sed -i -e "s/.$(echo a | tr 'a' '\t')\/sqlite/$SQLITE\/sqlite/" "$instant_run_two"
+				#sed -i -e 's/..\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
+				#sed -i -e 's/.\/sqlite/$SQLITE\/sqlite/' "$instant_run_two"
+				echo -e '\n' >> "$instant_run_two"
+			
+				su -c sh "$instant_run_two" > "$MAGMOD/second_detach_result.txt" 2>&1
+			fi
+
+			wrong_result=$(echo "Error: UNIQUE constraint failed: ownership.account,")
+					
+			if grep "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
+				[ -e "$MAGMOD/silent" ] || echo -e $C"\nDatabase file corrupted\nDatabase file need to be fixed, so please wait some little seconds...\n"$N; sleep 1;
+			
+				for o in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do touch "$o" && cat /dev/null > "$o" && chmod 0644 "$o"; done
+				#grep sqlite "$MODDIR/instant_exist_final.txt" > "$ACTAPPS"
+				sed -i -e "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
+				sed -i -e '1d' "$ACTAPPS"
+				sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
+				
+				cp -f "$ACTAPPS" "$ACTAPPSBCK"
+				echo -e "PLAY_DB_DIR=/data/data/com.android.vending/databases\nSQLITE=${MAGMOD}\n\n\nam force-stop com.android.vending\n\ncd \$SQLITE\nsleep 1\n" >> "$FINAL"
+				
+				var_ACTAPPS=$(awk '{ print }' "$ACTAPPSBCK")
+				for i in $(echo "$var_ACTAPPS"); do echo -e "$MAGMOD/sqlite $PLAY_DB_DIR/library.db \"DELETE FROM ownership WHERE doc_id = '$i' AND library_id = '3'\";" >> "$FINAL"; done
+				su -c sh "$FINAL"
+				am force-stop com.android.vending
+							
+				echo -e $G"\nDetaching task done\n"$N
+			else		
+				echo -e $G"\nDone\n"$N
+			fi
+			
+			for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/second_detach_result.txt" "$instant_run_two"; do rm -f "$f"; done
+		;;
+			N|n|No|no|NO) echo $R"\nCanceled\n"$N
+			exit 0
+						
+		;;
+			*) echo $R"\n\nINVALID ENTRY, try again.\n"$N
+		;;
+		esac
+		#stop coping to sdcard
+		#cp -f "$instant_run" /sdcard
+
+			
+		rm -rf "$ACT_BASIC_APPS"
+		rm -rf "$ACT_CUST_APPS"
+		rm -rf "$instant_run"
+		rm -f "$Instant_sqlite"
+		rm -rf "$MAGMOD/first_detach_result.txt"
+		rm -rf "$MAGMOD/DL_check.txt"
+		rm -rf "$MAGMOD/$TOADD.txt"
+		rm -rf "$FINAL"
+			# Selinux statut restoring
+		#case "$SELINUX_STATUT" in
+		#	Enforcing) setenforce 1
+		#	;;
+		#	Permissive) setenforce 0
+		#	;;
+		#esac
+
+ else
+		echo -e $Y"You will need internet connecton for this option!"$N
+		exit
+ fi
+ 
 }
 
 
 # Removing app
 rem() {
-SERVICESH=$MAGMOD/service.sh
+MODDIR=/data/adb/modules/Detach
+#Detach Directory
+MAGMOD=$MODDIR
+SERVICESH=$MAGMOD/main.sh
 ACTAPPS=$MAGMOD/actapps.txt
 ACTAPPSRD=$MAGMOD/actapps_ready.txt
 SERVICESHFN=$MAGMOD/final_service.sh
+applist=$MAGMOD/appslist.csv
+CONF=$(ls /sdcard/Detach.txt || ls /storage/emulated/0/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 [ -e "$ACTAPPSRD" ] | rm -f "$ACTAPPSRD"
 touch "$ACTAPPSRD"
 chmod 0644 "$ACTAPPSRD"
@@ -446,23 +451,24 @@ chmod 0644 "$ACTAPPSRD"
 touch "$ACTAPPS"
 chmod 0644 "$ACTAPPS"
 
-PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
+#PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
 
-egrep "^[[:space:]]*./sqlite" "$SERVICESH" >> "$ACTAPPS"
-sed -i -e "s/.\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
+#egrep "^[[:space:]]*$SQLITE/sqlite" "$SERVICESH" >> "$ACTAPPS"
+sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$ACTAPPS"
+sed -i -e "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
 sed -i -e 's/[ \t]*//' "$ACTAPPS"
 
 
 printf '%s\n' "$ACTAPPS" | while IFS= read -r line
-	do echo -e "\n\nHided app(s):\n$divider\n"
+	do echo -e "\n\nHidden app(s):\n$divider\n"
 	cat "$line"
 	echo -e "\n$divider\n"
 done
 
-echo -e $B"\nWich app do you want to remove ?\n(Type a part or the name or the complete name)"$N
+echo -e $B"\nWich app do you want to remove ?\n(Type a part or the name or the complete name.\n)"$N
 read TODEL
 	
-echo -e $G"\n\nSearch for the name...\n"$N; sleep 2;
+echo -e $G"\n\nSearching for the name...\n"$N; sleep 2;
 	
 APPLINE2REM=$(grep "$TODEL" "$ACTAPPS")
 APPLINENUM=$(grep -n "$APPLINE2REM" "$SERVICESH" | sed "s/:.*//")
@@ -486,34 +492,30 @@ case $CONFTODEL in
 			sed -i -e "${APPTOREMPREVIOUS}d" "$SERVICESH"
 			echo -e $G"\n$APPLINE2REM has been deleted\n"$N; sleep 1;
 			
+			#comment the app in Detach.txt file
+			pkgName=$(grep -wr "$APPLINE2REM" $applist | cut -d, -f2 | grep . || echo "N/A")
+
+			if [ "$pkgName" != "N/A" ]; then
+				#add # infron of app name
+				#get line number in detach.txt
+				BASIC_NUMBER=$(grep -noFx "$pkgName" "$CONF" | cut -f1 -d: | sort -u)
+
+				if [ "$BASIC_NUMBER" != "" ]; then
+					sed -i -e "${BASIC_NUMBER}s/$pkgName/#$pkgName/"  "$CONF"
+				fi
+
+			else
+				#result not found
+				#get line number in detach.txt
+				#only add if not available
+				grep -qF -- "# Other applications" "$CONF" || echo "# Other applications" >> "$CONF"
+				sed -i -e 's/'"^${APPLINE2REM}"'/'"#${APPLINE2REM}"'/g' "$CONF"
+			fi
+								
 			# Import data (extracted from DB file during module setup) to DB file
 			# Check
-			echo -e $C"\n\n=> Searching for backups...\n\n"$N; sleep 1;
-			ls | grep "^Backup_${APPLINE2REM}_*\.csv$" "$MAGMOD" >> "$MODPATH/DB_BCK_CHECK.txt"
-			if [ -z "$DB_BCK_CHECK"  ]; then
-				echo -e $R"\n\n ! No backup found, your app will appear again in you Play Store app when it will refresh it's database file.\n\n"$N; sleep 3; exit ;
-			fi
-			if [ $(echo "$APPLINE2REM" | wc -l) -ge "2" ]; then
-				echo -e $R"\n\n=> Removing old backup(s)...\n\n"$N; sleep 2;
-				
-				# Search all backup(s) for the specific app and delete it/them
-				ls -A1 "$MODPATH/Backup_$APPLINE2REM*.csv" | sed -n '1!p' | xargs rm -f
-			fi
-			echo -e $C"\n\n=> Restoring the last backup...\n\n"$N; sleep 1;
-			BCK_TO_RESTORE=$(ls -A1 "$MODPATH/Backup_$APPLINE2REM*.csv")
-			
-			# Restore backup data to DB File
-			tableName=$(head -n 1 /sdcard/a.csv | sed 's/,/;/g')
-			DATAS_DB=$("$MODPATH/sqlite" /sdcard/library.db "SELECT * FROM ownership WHERE doc_id = '$APPLINE2REM';")
-			
-			sed -i -e '1d' "$BCK_TO_RESTORE"
-			(echo .separator ";"; echo .import "$BCK_TO_RESTORE" ownership) | "$MODPATH/sqlite" "$PS_DATA_PATH"
 
-			for name in "$tableName";
-				do if [ $($echo "$DATAS_DB") -eq "$APPLINE2REM" ]; then
-					"$MODPATH/sqlite" /sdcard/library.db "UPDATE ownership SET "$name" = null WHERE "$name" = '';"
-				fi
-			done
+			echo -e $R"\n\nYour app will appear again in Play Store app within 48 hrs.\n\n"$N; sleep 3; exit ;
 			
 	;;
 	N|n|No|no|NO|Na|na) 
@@ -530,12 +532,12 @@ for k in "$ACTAPPS" "$ACTAPPSRD"; do rm -f "$k"; done
 echo -e $B"\nExit...\n"$N; sleep 1;
 
 # Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 
 	exit
 }
@@ -548,12 +550,12 @@ k() {
 	[ -e "$MAGMOD/silent" ] || echo -e $G"\nPS app has been force-stop.\n"$N
 	
 	# Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 
@@ -564,12 +566,12 @@ c() {
 	[ -e "$MAGMOD/silent" ] || echo -e $G"\nDone\n"$N
 	
 	# Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 
@@ -602,6 +604,10 @@ Now just make your choice..
 SCHEDULE
 
 read SCHEDU
+
+MODDIR=/data/adb/modules/Detach
+#Detach Directory
+MAGMOD=$MODDIR
 
 case $SCHEDU in
 	1|Tasker|tasker|TASKER)
@@ -646,6 +652,8 @@ case $SCHEDU in
 			echo -e $B"\nPlease select your desired crond schedule.\n1 for 30 minutes interval.\n2 for 1 hour interval.\n3 your choice.\nMake sure to check your input before entering (* * * *).\nFor help visit,\nhttps://crontab.guru\n\n4 to view current schedule (raw).\n5 to delete existing crond schedule.\n6 to exit.\n\nNow just make your choice..\n(1, 2, 3, 4,...)\n"$N
 			#echo -e $B"\nPlease enter your full crond command below.\nFormats for times: Minute (0-59) SPACE Hour (0-23) SPACE Day of mount (1-31) SPACE Month (1-12) SPACE Day of Week (0-6) (For Sunday=0 or 7)\nCommand exemple for every 2 hours:\ncrond 0 */2 * * * su -c detach -id\n\n"$N
 			read crond_entry
+			servicefile=$MAGMOD/service.sh
+			
 			case $crond_entry in
 				1|30|30M|30m|30min)
 				
@@ -683,7 +691,7 @@ case $SCHEDU in
 						if [ -f "$cronsfile" ]; then
 						
 							#remove schedule entry from service file
-							sed -i -e '/crond -b -c/d' "$SERVICESH"
+							sed -i -e '/crond -b -c/d' "$servicefile"
 							rm -rf "$cronsfile"
 							rm -rf "$LogFile"
 							
@@ -817,22 +825,27 @@ case $SCHEDU in
 esac
 		
 	# Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 #function to write crond schedule in file
 WriteSchedule () {
-	
+
+MODDIR=/data/adb/modules/Detach
+#Detach Directory
+MAGMOD=$MODDIR
+
+	servicefile=$MAGMOD/service.sh
 	#remove schedule entry from service file
-	sed -i -e '/crond -b -c/d' "$SERVICESH"
+	sed -i -e '/crond -b -c/d' "$servicefile"
 	
 	test -e "$LogFile" &&  rm -rf "$LogFile"
-	test -e "$SERVICESH" || touch "$SERVICESH"
+	#test -e "$servicefile" || touch "$servicefile"
 	test -d "$cronsDir" || mkdir -p "$cronsDir"
 	chmod 0755 "$cronsDir"
 	
@@ -844,13 +857,13 @@ WriteSchedule () {
 				
 		Y|y|Yes|yes|YES)
 		#LogFile argument
-		sed -i "11i\crond -b -c $cronsDir -L $LogFile" "$SERVICESH"
+		sed -i "24i\		crond -b -c $cronsDir -L $LogFile" "$servicefile"
 		#echo "\ncrond -b -c $cronsDir -L $LogFile" >> "$SERVICESH"
 		echo -e "Log will be saved at\n$LogFile\n"
 	;;
 		N|n|No|no|NO)
 		#entry without log
-		sed -i "11i\crond -b -c $cronsDir" "$SERVICESH"
+		sed -i "24i\		crond -b -c $cronsDir" "$servicefile"
 		#echo "\ncrond -b -c $cronsDir" >> "$SERVICESH"
 	;;
 	esac
@@ -858,16 +871,16 @@ WriteSchedule () {
 	#echo "\ncrond -b -c $cronsDir -L $LogFile" >> "$SERVICESH"
 	
 	#Create a new one and run it
-	chmod 0755 "$SERVICESH" && chmod +x "$SERVICESH"
+	chmod 0755 "$servicefile" && chmod +x "$servicefile"
 			
 	#Create crons file if not available
 	test -e "$cronsfile" || touch "$cronsfile"
 	#echo "0,30 * * * * detach -id" > "$cronsfile"
-	echo "$1 detach -id" > "$cronsfile"
+	echo "$1 su -c detach -id" > "$cronsfile"
 	chmod 0755 "$cronsfile" && chmod +x "$cronsfile"
 			
 	#Execute
-	sh "$SERVICESH"
+	su -c sh "$servicefile"
 	echo -e $Y"Rebooting once is recommended."$N
 
 }
@@ -892,12 +905,12 @@ s() {
 	fi
 	
 	# Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 
@@ -1017,12 +1030,12 @@ HELP_PLUS
 fi
 
 # Selinux statut restoring
-case "$SELINUX_STATUT" in
-	Enforcing) setenforce 1
-	;;
-	Permissive) setenforce 0
-	;;
-esac
+#case "$SELINUX_STATUT" in
+#	Enforcing) setenforce 1
+#	;;
+#	Permissive) setenforce 0
+#	;;
+#esac
 }
 
 

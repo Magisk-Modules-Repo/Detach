@@ -1,0 +1,45 @@
+ - Detach Market Apps Configuration -
+
+ - Remove comment (#) to detach an App.
+ 
+#Contacts 
+#Gmail 
+#Google App 
+#Google Plus 
+#Hangouts 
+#Phone 
+#Photos 
+#YouTube
+#YouTube Music
+#Gboard 
+#Clock 
+#Camera 
+#Inbox 
+#Duo
+#Dropbox 
+#PushBullet 
+#Calendar 
+#Keep 
+#Telegram 
+#Swiftkey 
+#Translate 
+#Facebook 
+#Pandora 
+#Twitter 
+#Slack 
+#Mega 
+#WhatsApp 
+#Voice 
+#Drive 
+#Netflex 
+#Pixel Launcher 
+#Wallpapers 
+#Capture 
+#Google Connectivity Services 
+#Google VR Services 
+#Google Play Services 
+#Google Carrier Services
+
+
+
+# Other applications
