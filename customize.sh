@@ -104,12 +104,13 @@ else
 fi
 
 if [ ! -e "$CONF" ]; then
-
+	ui_print ""
 	echo -e "!!! Your Detach.txt file does not exist !!!"
-	echo -e "!!! Copying Detach file to your storage root!!!"
-	cp -fr "$TMPDIR/Detach.txt" "$DetachFile"
+	echo -e "!!! Copying original Detach.txt file to your storage root!!!"
 	echo -e "\nLocation: "$DetachFile"\n"
-	echo -e "Check your Detach file and uncomment desired app"
+	echo -e "Check your Detach.txt file, uncomment desired app and flash again."
+	cp -fr "$TMPDIR/Detach.txt" "$DetachFile"
+	ui_print ""
 	abort Fail
 	CONF_BAD=1
 	
@@ -126,7 +127,9 @@ sed -n '5,41p' "$CONF" >> "$TMPDIR/SYN_CONF.txt"
 grep -q '\.' "$TMPDIR/SYN_CONF.txt"; if [ $? -eq 0 ]; then
 	ui_print ""
 	echo -e "!- Your "$CONF" file contain error(s)"
-	ui_print "Now copying new Detach file, check and try again."
+	echo -e "!!! Copying original Detach.txt file to your storage root!!!"
+	echo -e "\nLocation: "$DetachFile"\n"
+	echo -e "Check your Detach.txt file, uncomment desired app and flash again."
 	cp -fr "$TMPDIR/Detach.txt" "$DetachFile"
 	ui_print ""
 	CONF_BAD=1
@@ -139,7 +142,9 @@ new_file=$(sed -n '5,41p;42q' "$TMPDIR/Detach.txt" | sed 's/^#//g')
 if [ "$old_file" != "$new_file" ]; then
 	ui_print ""
 	echo -e "!- Your "$CONF" file is old"
-	ui_print "Now copying new Detach file, check and try again."
+	echo -e "!!! Copying orginal Detach.txt file to your storage root!!!"
+	echo -e "\nLocation: "$DetachFile"\n"
+	echo -e "Check your Detach.txt file, uncomment desired app and flash again."
 	cp -fr "$TMPDIR/Detach.txt" "$DetachFile"
 	ui_print ""
 	CONF_BAD=1
