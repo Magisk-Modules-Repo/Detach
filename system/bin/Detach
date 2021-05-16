@@ -939,7 +939,7 @@ $divider
 -r (or --rem-app)                  un-hide application 
 -k (or --fill)                     force-stop Play Store run
 -c (or --clear-PS-data)            clear Play Store datas
--t (or --toogle-silent-mode)       toggle silent mode
+-t (or --task-scheduler)       	   task-scheduler
 
 HELP
 
@@ -995,11 +995,12 @@ So use it with caution !
 
 
 
--t|--toogle-silent-mode
-=> This MOD now include a silent mode, it can be used to prevent
-additionnal and texts infos to be displayed followed the function(s) you use.
-It can be usefull for users who want to automate the detaching process with a tool/app.
-(Like Tasker for exemple)
+-t|--task-scheduler
+=> Use this to schedule detaching on a regular interval. This will ensure detaching of your detached app.
+Detach supports various scheduler (e.g. Tasker) as well as it comes with a bulit-in scheduler (crond).
+We recommended using crond method because of its reliability and flexibility.
+Crond method requires Busybox-NDK module to be installed.
+
 
 
 
