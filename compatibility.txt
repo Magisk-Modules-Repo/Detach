@@ -42,9 +42,9 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 	
 	PLAY_DB_DIR=/data/data/com.android.vending/databases
 	
-	grep sqlite "$SERVICESH" > "$ACTAPPS"
+	sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" > "$ACTAPPS"
 	sed -i -e "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
-	sed -i -e '1d' "$ACTAPPS"
+	sed -i -e 's/[ \t]*//' "$ACTAPPS"
 	sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
 	
 	cp -f "$ACTAPPS" "$ACTAPPSBCK"
