@@ -260,7 +260,9 @@ sleep 1;
 simple_mode_basic() {	
 ui_print "- Following basic apps will be hidden:"
 sleep 1;
+SERVICESH=$TMPDIR/main.sh
 DETACH=$TMPDIR/basic_apps.txt
+CONF=$(ls /sdcard/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 echo "" >> "$DETACH"
 	
 if grep -qo '^Gmail' $CONF; then
@@ -515,6 +517,7 @@ sleep 1;
 FINALCUST=$TMPDIR/FINALCUST.txt
 SQSH=$TMPDIR/sqlite.txt
 SQSHBAK=$TMPDIR/sqlite.bak
+SERVICESH=$TMPDIR/main.sh
 
 echo -e "# Custom Packages" >> "$FINALCUST"
 cp -af "$SQSH" "$SQSHBAK"
@@ -554,6 +557,7 @@ ui_print "=========================="
 ui_print "- Detach work in progress"
 ui_print "..."; sleep 1;
 
+SERVICESH=$TMPDIR/main.sh
 instant_run=$TMPDIR/instant_run.sh
 instant_run_two=$TMPDIR/instant_run_two.sh
 test -e "$instant_run" || touch "$instant_run"
@@ -601,10 +605,10 @@ if grep -q "$wrong_result" "$TMPDIR/first_detach_result.txt"; then
 	for o in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do touch "$o" && cat /dev/null > "$o" && chmod 0644 "$o"; done
 	
 	PLAY_DB_DIR=/data/data/com.android.vending/databases
-	sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$ACTAPPS"
-	#grep sqlite "$SERVICESH" > "$ACTAPPS"
+	
+	sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" > "$ACTAPPS"
 	sed -i -e "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
-	sed -i -e '1d' "$ACTAPPS"
+	sed -i -e 's/[ \t]*//' "$ACTAPPS"
 	sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
 		
 	cp -f "$ACTAPPS" "$ACTAPPSBCK"
@@ -666,6 +670,7 @@ for i in "$TMPDIR/compatibility.txt" "$TMPDIR/sqlite" "$TMPDIR/service.sh" "$TMP
 
 # =============================================
 # Necessary special permissions
+SERVICESH=$TMPDIR/main.sh
 set_perm_recursive $MODPATH 0 0 0755 0644
 set_perm_recursive $TMPDIR 0 0 0755 0644
 set_perm $MODPATH/system/bin/Detach 0 0 0777
@@ -704,7 +709,7 @@ pre_request
 test "$CONF_BAD" && exit
 
 SIMPLE=/sdcard/simple_mode.txt
-
+CONF=$(ls /sdcard/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 test -e "$SIMPLE" && simple_mode_pre_request
 # ----------------------------------
 #get # Other applications line number
