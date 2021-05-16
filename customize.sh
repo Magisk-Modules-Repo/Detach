@@ -158,7 +158,7 @@ Contents=$(sed -n "5,$Last_line_no"p "$CONF" | grep -v '^[[:blank:]]*#'| grep '[
 if [ -z "${Contents}" ]; then
 	echo -e "- You've not uncommented any basic application"
 	echo -e "  or"
-	echo -e "- written any custom application in your: "$DetachFile" file"
+	echo -e "- written any custom application in your: "$CONF" file"
 	echo -e ""
 	echo -e "- Uncomment or write a custom package name..."
 	echo -e " then flash again."
