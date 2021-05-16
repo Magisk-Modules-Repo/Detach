@@ -151,6 +151,23 @@ if [ "$old_file" != "$new_file" ]; then
    
 fi
 
+#check if any detachable app is present in detach file, start from line 5
+Last_line_no=$(sed '!d;=' "$CONF" | paste -d: - - | sed -n '$p' | cut -d: -f 1)
+Contents=$(sed -n "5,$Last_line_no"p "$CONF" | grep -v '^[[:blank:]]*#'| grep '[A-Za-z0-9]')
+
+if [ -z "${Contents}" ]; then
+	echo -e "- You've not uncommented any basic application"
+	echo -e "  or"
+	echo -e "- written any custom application in your: "$DetachFile" file"
+	echo -e ""
+	echo -e "- Uncomment or write a custom package name..."
+	echo -e " then flash again."
+	echo -e "- Installation canceled..."
+	echo -e ""
+	abort Fail
+	CONF_BAD=1
+fi
+
 UP_SERVICESSH=$MODPATH/main.sh
 if [ -e "$UP_SERVICESSH" ] && test ! "$CONF_BAD"; then
 	CTSERVICESH=$(awk 'END{print NR}' $UP_SERVICESSH)
@@ -174,6 +191,7 @@ ui_print "- Welcome in Simple mode :)"
 ui_print ""
 		
 ui_print "- Checking your Detach.txt file"; sleep 1;
+CONF=$(ls /sdcard/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 CONF_CHECK1=$(cat "$CONF" | grep 'Detach Market Apps Configuration')
 CONF_CHECK2=$(cat "$CONF" | grep 'Remove comment (#) to detach an App.')
 CONF_CHECK3=$(wc -l "$CONF" | sed "s| $CONF||")
@@ -504,7 +522,7 @@ ui_print "- written any custom application in your /sdcard/Detach.txt file."
 ui_print ""
 ui_print "- At least uncomment one or write a custom package name..."
 ui_print ""
-ui_print "- Install exist..."
+ui_print "- Installation canceled..."
 }
 
 
