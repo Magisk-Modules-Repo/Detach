@@ -939,6 +939,7 @@ $divider
 -r (or --rem-app)                  un-hide application 
 -k (or --kill)                     force-close Play Store service
 -c (or --clear-PS-data)            clear Play Store datas
+-s (or --silent-mode)       	   silent-mode
 -t (or --task-scheduler)       	   task-scheduler
 
 HELP
