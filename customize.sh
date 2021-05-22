@@ -532,29 +532,42 @@ ui_print ""
 ui_print "- Following custom apps will be hidden:"
 sleep 1;
 
-FINALCUST=$TMPDIR/FINALCUST.txt
+#FINALCUST=$TMPDIR/FINALCUST.txt
 SQSH=$TMPDIR/sqlite.txt
 SQSHBAK=$TMPDIR/sqlite.bak
 SERVICESH=$TMPDIR/main.sh
 
-echo -e "# Custom Packages" >> "$FINALCUST"
+echo -e "# Custom Packages" >> "$SERVICESH"
 cp -af "$SQSH" "$SQSHBAK"
 
 echo "$CHECK_PACKAGES" >> "$TMPDIR/CHECK_PACKAGES.txt"
 
 FINAL_PACKS=$(awk '{ print }' "$TMPDIR/CHECK_PACKAGES.txt")
 
-SHOW_PACKS=$(echo "$FINAL_PACKS" | tr -d '\r')
-printf '%s\n' "$SHOW_PACKS" | while IFS= read -r line
-	do ui_print "- $line"
-done
+#SHOW_PACKS=$(echo "$FINAL_PACKS" | tr -d '\r')
+#printf '%s\n' "$SHOW_PACKS" | while IFS= read -r line
+#	do ui_print "- $line"
+#done
 
 printf '%s\n' "$FINAL_PACKS" | while IFS= read -r line
 	do
-		echo -e "	\$SQLITE/sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$line'\";\n" >> "$FINALCUST"
+		app_name="	\$SQLITE/sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$line'\";"
+
+		if grep -qF -- "$app_name" "$SERVICESH"; then
+			#already available
+			ui_print ""
+			echo -e "Package name: "$line" already added!!"
+			echo -e "Skipping..."
+			ui_print ""
+		else
+			# add if not found
+			echo "$app_name" >> "$SERVICESH"
+			echo -e "\n" >> "$SERVICESH"
+			ui_print "- $line"
+		fi
 done
 
-cat "$FINALCUST" >> "$SERVICESH"
+#cat "$FINALCUST" >> "$SERVICESH"
 
 ui_print "- Custom apps has been added successfully"
 sleep 1;
