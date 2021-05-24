@@ -1,6 +1,8 @@
 <p align="center">
 <h2 align=center> Detach </h3>
 
+<p align="center"><img width="320" height="320" src="https://i.ibb.co/J2kbHSp/photo-2021-05-24-05-09-23.jpg"></p>
+
 <p align="center">
  <a href="https://forum.xda-developers.com/android/software-hacking/mod-detach-market-links-theme-ready-apps-t3447494"><img src="https://img.shields.io/badge/XDA-Thread-yellow.svg?longCache=true&style=flat-square"></a><br />
  <a href=https://t.me/Detach_gms_apps><img src="https://img.shields.io/badge/Telegram-Channel-blue.svg?longCache=true&style=flat-square"></a></p><br />
