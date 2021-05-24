@@ -151,6 +151,23 @@ if [ "$old_file" != "$new_file" ]; then
    
 fi
 
+#check if any detachable app is present in detach file, start from line 5
+Last_line_no=$(sed '!d;=' "$CONF" | paste -d: - - | sed -n '$p' | cut -d: -f 1)
+Contents=$(sed -n "5,$Last_line_no"p "$CONF" | grep -v '^[[:blank:]]*#'| grep '[A-Za-z0-9]')
+
+if [ -z "${Contents}" ]; then
+	echo -e "- You've not uncommented any basic application"
+	echo -e "  or"
+	echo -e "- written any custom application in your: "$CONF" file"
+	echo -e ""
+	echo -e "- Uncomment or write a custom package name..."
+	echo -e " then flash again."
+	echo -e "- Installation canceled..."
+	echo -e ""
+	abort Fail
+	CONF_BAD=1
+fi
+
 UP_SERVICESSH=$MODPATH/main.sh
 if [ -e "$UP_SERVICESSH" ] && test ! "$CONF_BAD"; then
 	CTSERVICESH=$(awk 'END{print NR}' $UP_SERVICESSH)
@@ -174,6 +191,7 @@ ui_print "- Welcome in Simple mode :)"
 ui_print ""
 		
 ui_print "- Checking your Detach.txt file"; sleep 1;
+CONF=$(ls /sdcard/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 CONF_CHECK1=$(cat "$CONF" | grep 'Detach Market Apps Configuration')
 CONF_CHECK2=$(cat "$CONF" | grep 'Remove comment (#) to detach an App.')
 CONF_CHECK3=$(wc -l "$CONF" | sed "s| $CONF||")
@@ -260,7 +278,9 @@ sleep 1;
 simple_mode_basic() {	
 ui_print "- Following basic apps will be hidden:"
 sleep 1;
+SERVICESH=$TMPDIR/main.sh
 DETACH=$TMPDIR/basic_apps.txt
+CONF=$(ls /sdcard/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 echo "" >> "$DETACH"
 	
 if grep -qo '^Gmail' $CONF; then
@@ -502,7 +522,7 @@ ui_print "- written any custom application in your /sdcard/Detach.txt file."
 ui_print ""
 ui_print "- At least uncomment one or write a custom package name..."
 ui_print ""
-ui_print "- Install exist..."
+ui_print "- Installation canceled..."
 }
 
 
@@ -512,28 +532,42 @@ ui_print ""
 ui_print "- Following custom apps will be hidden:"
 sleep 1;
 
-FINALCUST=$TMPDIR/FINALCUST.txt
+#FINALCUST=$TMPDIR/FINALCUST.txt
 SQSH=$TMPDIR/sqlite.txt
 SQSHBAK=$TMPDIR/sqlite.bak
+SERVICESH=$TMPDIR/main.sh
 
-echo -e "# Custom Packages" >> "$FINALCUST"
+echo -e "# Custom Packages" >> "$SERVICESH"
 cp -af "$SQSH" "$SQSHBAK"
 
 echo "$CHECK_PACKAGES" >> "$TMPDIR/CHECK_PACKAGES.txt"
 
 FINAL_PACKS=$(awk '{ print }' "$TMPDIR/CHECK_PACKAGES.txt")
 
-SHOW_PACKS=$(echo "$FINAL_PACKS" | tr -d '\r')
-printf '%s\n' "$SHOW_PACKS" | while IFS= read -r line
-	do ui_print "- $line"
-done
+#SHOW_PACKS=$(echo "$FINAL_PACKS" | tr -d '\r')
+#printf '%s\n' "$SHOW_PACKS" | while IFS= read -r line
+#	do ui_print "- $line"
+#done
 
 printf '%s\n' "$FINAL_PACKS" | while IFS= read -r line
 	do
-		echo -e "	\$SQLITE/sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$line'\";\n" >> "$FINALCUST"
+		app_name="	\$SQLITE/sqlite \$PLAY_DB_DIR/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '$line'\";"
+
+		if grep -qF -- "$app_name" "$SERVICESH"; then
+			#already available
+			ui_print ""
+			echo -e "Package name: "$line" already added!!"
+			echo -e "Skipping..."
+			ui_print ""
+		else
+			# add if not found
+			echo "$app_name" >> "$SERVICESH"
+			echo -e "\n" >> "$SERVICESH"
+			ui_print "- $line"
+		fi
 done
 
-cat "$FINALCUST" >> "$SERVICESH"
+#cat "$FINALCUST" >> "$SERVICESH"
 
 ui_print "- Custom apps has been added successfully"
 sleep 1;
@@ -554,6 +588,7 @@ ui_print "=========================="
 ui_print "- Detach work in progress"
 ui_print "..."; sleep 1;
 
+SERVICESH=$TMPDIR/main.sh
 instant_run=$TMPDIR/instant_run.sh
 instant_run_two=$TMPDIR/instant_run_two.sh
 test -e "$instant_run" || touch "$instant_run"
@@ -601,10 +636,10 @@ if grep -q "$wrong_result" "$TMPDIR/first_detach_result.txt"; then
 	for o in "$ACTAPPS" "$ACTAPPSBCK" "$FINAL"; do touch "$o" && cat /dev/null > "$o" && chmod 0644 "$o"; done
 	
 	PLAY_DB_DIR=/data/data/com.android.vending/databases
-	sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$ACTAPPS"
-	#grep sqlite "$SERVICESH" > "$ACTAPPS"
+	
+	sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" > "$ACTAPPS"
 	sed -i -e "s/\$SQLITE\/sqlite \$PLAY_DB_DIR\/library.db \"UPDATE ownership SET library_id = 'u-wl' where doc_id = '//" -i -e "s/'\";//" "$ACTAPPS"
-	sed -i -e '1d' "$ACTAPPS"
+	sed -i -e 's/[ \t]*//' "$ACTAPPS"
 	sed -i -e 's/[[:blank:]]*//' "$ACTAPPS"
 		
 	cp -f "$ACTAPPS" "$ACTAPPSBCK"
@@ -666,6 +701,7 @@ for i in "$TMPDIR/compatibility.txt" "$TMPDIR/sqlite" "$TMPDIR/service.sh" "$TMP
 
 # =============================================
 # Necessary special permissions
+SERVICESH=$TMPDIR/main.sh
 set_perm_recursive $MODPATH 0 0 0755 0644
 set_perm_recursive $TMPDIR 0 0 0755 0644
 set_perm $MODPATH/system/bin/Detach 0 0 0777
@@ -704,7 +740,7 @@ pre_request
 test "$CONF_BAD" && exit
 
 SIMPLE=/sdcard/simple_mode.txt
-
+CONF=$(ls /sdcard/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 test -e "$SIMPLE" && simple_mode_pre_request
 # ----------------------------------
 #get # Other applications line number
