@@ -510,7 +510,7 @@ cat "$DETACH" >> "$SERVICESH"
 echo " " >> "$SERVICESH"
 # rm -f $DETACH
 sleep 1;
-ui_print "-Hiding of basic applications is done.";sleep 1;
+ui_print "- Hiding of basic applications is done.";sleep 1;
 }
 
 
