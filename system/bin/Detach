@@ -67,7 +67,6 @@ bb
 case $1 in
 	-id|--instant-detach) ida;;
 	-l|--list-app) list;;
-	-trwp|rec|--recovery) twrp_compatibility;;
 	-a|--add-app) add;;
 	-r|--rem-app) rem;;
 	-k|--kill) k;;
@@ -924,8 +923,9 @@ $divider
 Welcome to the Detach Magisk module
 $divider
 $divider
-MOD ported by Rom@xda-developers from MOD by
-hinxnz@xda-developers to works on Magisk v17+.
+Originaly made by hinxnz@xda-developers,
+ported by Rom@xda-developers to works on
+new Magisk versions with the help of @hoypolli.
 $divider
 
 
@@ -967,16 +967,20 @@ $instant_run
 
 -a or --add-app
 => Instantly adding new application(s) in the detaching function,
-the new app name need to be writed directly in your terminal app with your keyboard.
-To confirm it, you just have to press the ENTER key. After that you will be prompted to 
-confirm your action by a yes or a no.
+the new app name need to be writed directly in your terminal app
+with your keyboard.
+To confirm it, you just have to press the ENTER key. After that
+you will be prompted to confirm your action by a yes or a no.
 
 
 
 -r or --rem-app
-=> Use this function if you want to remove application from the detach feature.
-By using this feature, you will have to provide a pattern (a part or the full name) of the app name.
-You will be asked to confirm the action with a yes or a name as if you were adding an application.
+=> Use this function if you want to remove application from the
+detach feature.
+By using this feature, you will have to provide a pattern
+(a part or the full name) of the app name.
+You will be asked to confirm the action with a yes or a name
+as if you were adding an application.
 
 
 
@@ -988,18 +992,25 @@ usefull to take changes made by this MOD.
 
 -c|--clear-PS-data
 => Please be carrefull with this function because it purely cleanup
-the data of your Play Store app (PS is an abbreviation of Play Store). So by using it,
-it will not prompt you to confirm this action. After that PS data will be cleared,
-your recent app(s) updates will be deleted and the databases files of your PS
-will need to be generated again, and it can take at maximum 1 or 2 hours.
+the data of your Play Store app (PS is an abbreviation of Play Store).
+So by using it, it will not prompt you to confirm this action.
+
+After that PS data will be cleared, your recent app(s) updates
+will be deleted and the databases files of your PS
+will need to be generated again, and it can take at maximum 
+several hours.
 So use it with caution !
 
 
 
 -t|--task-scheduler
-=> Use this to schedule detaching on a regular interval. This will ensure detaching of your detached app.
-Detach supports various scheduler (e.g. Tasker) as well as it comes with a bulit-in scheduler (crond).
-We recommended using crond method because of its reliability and flexibility.
+=> Use this to schedule detaching on a regular interval.
+This will ensure detaching of your detached app.
+Detach supports various scheduler (e.g. Tasker) as well
+as it comes with a bulit-in scheduler (crond).
+
+We recommended using crond method because of its
+reliability and flexibility.
 Crond method requires Busybox-NDK module to be installed.
 
 
@@ -1007,7 +1018,8 @@ Crond method requires Busybox-NDK module to be installed.
 -s|--toogle-silent-mode
 => This MOD now includes a silent mode, it can be used to prevent
 additionnal and texts infos to be displayed by the function(s) you use.
-It can be usefull for users who want to automate the detaching process with a tool/app.
+It can be usefull for users who want to automate the detaching
+process with a tool/app.
 (Like Tasker for exemple)
 
 
@@ -1023,11 +1035,23 @@ $divider
 
 Links:
 
-Original xda thread: https://forum.xda-developers.com/android/software-hacking/mod-detach-market-links-theme-ready-apps-t3447494
-Original creator: hinxnz at: https://forum.xda-developers.com/member.php?u=1909299
-MOD ported by Rom: https://forum.xda-developers.com/member.php?u=5332893
-Telegram channel: https://t.me/Detach_gms_apps
-Git repo: https://github.com/xerta555/Detach
+Original xda thread:
+https://forum.xda-developers.com/android/software-hacking/mod-detach-market-links-theme-ready-apps-t3447494
+
+Original creator: hinxnz at:
+https://forum.xda-developers.com/member.php?u=1909299
+
+MOD ported by Rom:
+https://forum.xda-developers.com/member.php?u=5332893
+
+Thanks to @hoypolli for help in code fixs/improvments and new sqlite binary
+
+Telegram channel:
+https://t.me/Detach_gms_apps
+
+Git repo:
+https://github.com/xerta555/Detach
+
 Module-Repo link for Magisk: https://github.com/Magisk-Modules-Repo/Detach
 	
 	
