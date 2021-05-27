@@ -437,6 +437,7 @@ rem() {
 MODDIR=/data/adb/modules/Detach
 #Detach Directory
 MAGMOD=$MODDIR
+SQLITE=$MAGMOD
 SERVICESH=$MAGMOD/main.sh
 ACTAPPS=$MAGMOD/actapps.txt
 ACTAPPSRD=$MAGMOD/actapps_ready.txt
@@ -450,7 +451,7 @@ chmod 0644 "$ACTAPPSRD"
 touch "$ACTAPPS"
 chmod 0644 "$ACTAPPS"
 
-#PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
+PS_DATA_PATH=/data/data/com.android.vending/databases/library.db
 
 #egrep "^[[:space:]]*$SQLITE/sqlite" "$SERVICESH" >> "$ACTAPPS"
 sed -n '/^[[:space:]]*$SQLITE\/sqlite.*/p' "$SERVICESH" >> "$ACTAPPS"
@@ -473,10 +474,10 @@ APPLINE2REM=$(grep "$TODEL" "$ACTAPPS")
 APPLINENUM=$(grep -n "$APPLINE2REM" "$SERVICESH" | sed "s/:.*//")
 	
 if [ ! "$APPLINE2REM" ]; then
-	echo -e $R"\n\n ! No matchs found, please refine your pattern.\n\n"$N; sleep 3; exit ;
+	echo -e $R"\n\n ! No matches found, please refine your pattern.\n\n"$N; sleep 3; exit ;
 fi
 if [ $(echo "$APPLINE2REM" | wc -l) -gt "1" ]; then
-	echo -e $R"\n\n ! Too much matchs found, please refine your pattern.\n\n"$N; sleep 3; exit ;
+	echo -e $R"\n\n ! Too much matches found, please refine your pattern.\n\n"$N; sleep 3; exit ;
 fi
 
 APPTOREMPREVIOUS=$((APPLINENUM-1))
@@ -490,6 +491,11 @@ case $CONFTODEL in
 			sed -i -e "${APPLINENUM}d" "$SERVICESH"
 			sed -i -e "${APPTOREMPREVIOUS}d" "$SERVICESH"
 			echo -e $G"\n$APPLINE2REM has been deleted\n"$N; sleep 1;
+			
+			#Add package name to library.db
+			am force-stop com.android.vending
+			sleep 1
+			$SQLITE/sqlite $PS_DATA_PATH "UPDATE ownership SET library_id = '3' where doc_id = '$APPLINE2REM'";
 			
 			#comment the app in Detach.txt file
 			pkgName=$(grep -wr "$APPLINE2REM" $applist | cut -d, -f2 | grep . || echo "N/A")
@@ -514,7 +520,7 @@ case $CONFTODEL in
 			# Import data (extracted from DB file during module setup) to DB file
 			# Check
 
-			echo -e $R"\n\nYour app will appear again in Play Store app within 48 hrs.\n\n"$N; sleep 3; exit ;
+			echo -e $R"\n\nYour app should be visible in PS update now. If not, wait a few hours.\n\n"$N; sleep 3; exit ;
 			
 	;;
 	N|n|No|no|NO|Na|na) 
@@ -925,7 +931,7 @@ $divider
 $divider
 Originaly made by hinxnz@xda-developers,
 ported by Rom@xda-developers to works on
-new Magisk versions with the help of @hoypolli.
+new Magisk versions with the help of @Sobuj53.
 $divider
 
 
@@ -947,7 +953,7 @@ HELP
 if [ -e "$MAGMOD/silent" ]; then
 	exit
 else	
-	echo -e "\nNeed more infos?\n(Yes or No)\n\n"
+	echo -e "\nNeed more info?\n(Yes or No)\n\n"
 
 	read HELP_MORE
 
@@ -1016,8 +1022,8 @@ Crond method requires Busybox-NDK module to be installed.
 
 
 -s|--toogle-silent-mode
-=> This MOD now includes a silent mode, it can be used to prevent
-additionnal and texts infos to be displayed by the function(s) you use.
+=> This MOD comes with a silent mode feature. It can be used to prevent
+additionnal infos to be displayed by the function(s) you use.
 It can be usefull for users who want to automate the detaching
 process with a tool/app.
 (Like Tasker for exemple)
@@ -1044,7 +1050,7 @@ https://forum.xda-developers.com/member.php?u=1909299
 MOD ported by Rom:
 https://forum.xda-developers.com/member.php?u=5332893
 
-Thanks to @hoypolli for help in code fixs/improvments and new sqlite binary
+Thanks to @Sobuj53 for help in code fixs/improvments and new sqlite binary
 
 Telegram channel:
 https://t.me/Detach_gms_apps
