@@ -62,7 +62,11 @@ fi
 Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
 echo -e $C"\nDetach $Detach_version\n\n"$N; sleep 1;
 
+#check busybox
 bb
+if ! $BBok; then
+	exit 1
+fi	
 
 case $1 in
 	-id|--instant-detach) ida;;
@@ -189,7 +193,7 @@ if grep -q "$wrong_result" "$MAGMOD/first_detach_result.txt"; then
 		su -c sh "$FINAL"
 	fi
 	
-	for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/first_detach_result.txt"; do rm -f "$f"; done
+	for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/first_detach_result.txt"; do rm -rf "$f"; done
 	echo -e $C"\nDatabase file fixed.\n\nDone\n"$N
 else		
 	echo -e $G"\nDone\n"$N
@@ -198,7 +202,7 @@ fi
 am force-stop com.android.vending
 
  for r in "$instant_run_two" "$ACTAPPS" "$ACTAPPSBCK" "$FINAL" "$MAGMOD/first_detach_result.txt"; do rm -f "$r"; done
-rm -f "$MAGMOD/SYN_CONF.txt"
+rm -rf "$MAGMOD/SYN_CONF.txt"
 
 # Selinux statut restoring
 #case "$SELINUX_STATUT" in
@@ -226,7 +230,7 @@ printf '%s\n' "$FINAL_apps_list" | while IFS= read -r line
 done
 echo -e "\n$divider\n"
 
-rm -f "$MAGMOD/apps_lists.txt"
+rm -rf "$MAGMOD/apps_lists.txt"
 }
 
 
@@ -254,7 +258,7 @@ PLAY_DB_DIR=/data/data/com.android.vending/databases
 instant_run=$MAGMOD/instant_run.sh
 instant_run_two=$MAGMOD/instant_run_two.sh
 
-#check net connecton
+#check net connection
 if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 
 		for i in "$ACT_BASIC_APPS" "$ACT_CUST_APPS" "$Instant_sqlite"; do  [ ! -e "$i" ] && touch "$i" && chmod -R 0644 "$i"; done
@@ -326,7 +330,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 			fi
 
 			# Removing any existant backup(s) of specified app
-			ls -A1 "$MAGMOD/Backup_${TOADD}*.txt" 2>/dev/null | xargs rm -f
+			ls -A1 "$MAGMOD/Backup_${TOADD}*.txt" 2>/dev/null | xargs rm -rf
 			
 			
 			# Backup DB file specific datas before magic things..
@@ -395,7 +399,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 				echo -e $G"\nDone\n"$N
 			fi
 			
-			for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/second_detach_result.txt" "$instant_run_two"; do rm -f "$f"; done
+			for f in "$ACTAPPS" "$ACTAPPSBCK" "$MAGMOD/second_detach_result.txt" "$instant_run_two"; do rm -rf "$f"; done
 		;;
 			N|n|No|no|NO) echo $R"\nCanceled\n"$N
 			exit 0
@@ -411,7 +415,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 		rm -rf "$ACT_BASIC_APPS"
 		rm -rf "$ACT_CUST_APPS"
 		rm -rf "$instant_run"
-		rm -f "$Instant_sqlite"
+		rm -rf "$Instant_sqlite"
 		rm -rf "$MAGMOD/first_detach_result.txt"
 		rm -rf "$MAGMOD/DL_check.txt"
 		rm -rf "$MAGMOD/$TOADD.txt"
@@ -425,7 +429,7 @@ if ping -q -w1 -c1  8.8.8.8 > /dev/null; then
 		#esac
 
  else
-		echo -e $Y"You will need internet connecton for this option!"$N
+		echo -e $Y"You will need internet connection for this option!"$N
 		exit
  fi
  
@@ -444,10 +448,10 @@ ACTAPPSRD=$MAGMOD/actapps_ready.txt
 SERVICESHFN=$MAGMOD/final_service.sh
 applist=$MAGMOD/appslist.csv
 CONF=$(ls /sdcard/Detach.txt || ls /storage/emulated/0/Detach.txt || ls /sdcard/detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
-[ -e "$ACTAPPSRD" ] | rm -f "$ACTAPPSRD"
+[ -e "$ACTAPPSRD" ] | rm -rf "$ACTAPPSRD"
 touch "$ACTAPPSRD"
 chmod 0644 "$ACTAPPSRD"
-[ -e "$ACTAPPS" ] | rm -f "$ACTAPPS"
+[ -e "$ACTAPPS" ] | rm -rf "$ACTAPPS"
 touch "$ACTAPPS"
 chmod 0644 "$ACTAPPS"
 
@@ -532,7 +536,7 @@ case $CONFTODEL in
 esac
 
 	
-for k in "$ACTAPPS" "$ACTAPPSRD"; do rm -f "$k"; done
+for k in "$ACTAPPS" "$ACTAPPSRD"; do rm -rf "$k"; done
 
 echo -e $B"\nExit...\n"$N; sleep 1;
 
@@ -618,12 +622,12 @@ case $SCHEDU in
 	1|Tasker|tasker|TASKER)
 		echo -e $P"\n\nYour choice: Tasker\n"$N
 		if [ $(pm list packages net.dinglisch.android.taskerm | sed "s/package://") == "net.dinglisch.android.taskerm" ]; then
-			echo -e $C"\nNext step require Busybox Magisk Module and an active connexion (WIFI/Datas).\n"$N; sleep 2;
-			bb
+			echo -e $C"\nNext step require Busybox Magisk Module and an active connection (WIFI/Data).\n"$N; sleep 2;
+			
 			wget --no-check-certificate -T 5 -q -O "$MAGMOD/Auto_Detach_Tasker.prf.xml" https://github.com/xerta555/Detach-Files/raw/master/Auto_Detach_Tasker.prf.xml 2>/dev/null
 			
 			if [ ! -e "$MAGMOD/Auto_Detach_Tasker.prf.xml" ]; then
-				echo -e $R"Unable to download the necessary file!\nPlease check your connexion."$N
+				echo -e $R"Unable to download the necessary file!\nPlease check your connection."$N
 				exit
 			fi
 			
@@ -776,7 +780,7 @@ case $SCHEDU in
 		
 		test -d /data/data/com.wakdev.droidautomation.free/files/profiles/automation/ || mkdir -p /data/data/com.wakdev.droidautomation.free/files/profiles/automation/
 		
-		test -e /sdcard/Droid_Automation_Detach.json || rm -f /sdcard/Droid_Automation_Detach.json
+		test -e /sdcard/Droid_Automation_Detach.json || rm -rf /sdcard/Droid_Automation_Detach.json
 		
 		echo "{\"automation.profile.name\":\"Droid Automation Detach\",\"automation.profile.enabled\":true,\"automation.profile.triggers.length\":1,\"automation.profile.triggers.data\":[{\"triggers.fields\":{\"field3\":\"${DA3}\",\"field1\":\"${DA1}\",\"field2\":\"${DA2}\"},\"triggers.config\":{\"itemUpdate\":\"true\",\"itemTriggerExtra\":null,\"requestType\":\"38\",\"itemTrigger\":\"18367\",\"itemHash\":\"833cf518-c11b-411c-a412-98900f11705a\",\"itemDescription\":\"Déclencher toutes les : 05h.06m.07s.\"}}],\"automation.profile.tasks.length\":1,\"automation.profile.tasks.data\":[{\"task.fields\":{\"field1\":\"su -c detach -id\"},\"task.config\":{\"itemUpdate\":\"false\",\"requestType\":\"6666\",\"itemTask\":\"su -c detach -id\",\"itemDescription\":\"su -c detach -id\",\"itemHash\":\"be7b37d9-1573-45f5-b20c-42df0a90be6a\"}}]}" >> /sdcard/Droid_Automation_Detach.json
 		
@@ -905,7 +909,7 @@ s() {
 		chmod 0644 "$SILENT"
 		echo -e $G"..\nNew mode: Enabled\n"$N; sleep 1;
 	else
-		rm -f "$SILENT"
+		rm -rf "$SILENT"
 		echo -e $G"..\nNew mode: Disabled\n"$N; sleep 1;
 	fi
 	
@@ -1081,23 +1085,60 @@ fi
 # Busybox installer
 bb() {
 
-BBPATH=$MAGIMG/busybox-ndk
-busybox_magisk=$(ls "$BBPATH/system/bin/busybox" || ls "$BBPATH/system/xbin/busybox" || ls /system/xbin/busybox || ls /system/bin/busybox || ls /system/sbin/busybox || ls /sbin/busybox) 2>/dev/null
-
 bb_ok() {
-echo -e $C"Compatibility check... ✓\n"$N; sleep 0.1;
+echo -e $C"Compatibility check ok... ✓\n"$N; sleep 0.1;
 }
 
 bb_nok() {
-echo -e $C"Compatibility check... ×\n"$N; sleep 0.1;
+echo -e $Y"Compatibility failed... ×\n"$N; sleep 0.1;
 }
 
-if [ -z "$busybox_magisk" ]; then
-	bb_nok
+_busybox=false
+if $_busybox; then
+  true
+elif [ -x /system/xbin/busybox ]; then
+  _bb=/system/xbin/busybox
+elif [ -x /system/bin/busybox ]; then
+  _bb=/system/bin/busybox
 else
-	bb_ok
+  echo -e $Y"! Busybox not detected"$N
+  bb_nok
+  #echo "Please install one (@osm0sis' busybox recommended)"
+  false
 fi
+set_busybox $_bb
+_bbname="$($_bb | head -n1 | awk '{print $1,$2}')"
+
+if [ "$_bbname" == "" ]; then
+  _bbname="BusyBox not found!"
+  BBok=false
+else
+  BBok=true
+  bb_ok
+fi
+
 }
+
+#=========================== Set Busybox up
+# Variables:
+#  BBok - If busybox detection was ok (true/false)
+#  _bb - Busybox binary directory
+#  _bbname - Busybox name
+
+# set_busybox <busybox binary>
+# alias busybox applets
+set_busybox() {
+  if [ -x "$1" ]; then
+    for i in $(${1} --list); do
+      if [ "$i" != 'echo' ]; then
+        alias "$i"="${1} $i" >/dev/null 2>&1
+      fi
+    done
+    _busybox=true
+    _bb=$1
+  fi
+}
+
 
 divider="---------------"
 separator="-------------"

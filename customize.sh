@@ -46,8 +46,6 @@ else
   false
 fi
 set_busybox $_bb
-[ $? -ne 0 ] && exit $?
-[ -n "$ANDROID_SOCKET_adbd" ] && alias clear='echo'
 _bbname="$($_bb | head -n1 | awk '{print $1,$2}')"
 BBok=true
 if [ "$_bbname" == "" ]; then
@@ -95,8 +93,8 @@ cp -af "$TMPDIR/system/bin/Detach" "$MODPATH/system/bin/Detach"
 baseDir=$(echo $MODPATH | sed s/"_update"//)
 sed  -i -e 's~^MODDIR.*$~MODDIR='"${baseDir}"'~g' "$MODPATH/system/bin/Detach"
 
-rm -f "$TMPDIR/LICENCE" && rm -f "$MODPATH/LICENCE"
-rm -f "$TMPDIR/.gitattributes" && rm -f "$MODPATH/.gitattributes"
+rm -rf "$TMPDIR/LICENCE" && rm -rf "$MODPATH/LICENCE"
+rm -rf "$TMPDIR/.gitattributes" && rm -rf "$MODPATH/.gitattributes"
 
 [ ! -e "$TMPDIR/sqlite" ] && abort 'sqlite no exist!'
 set_perm_recursive $TMPDIR 0 0 0755 0644
@@ -720,7 +718,7 @@ if grep -q "$wrong_result" "$TMPDIR/first_detach_result.txt"; then
 		cd "$PRESENT_DIR"
 	fi
 	
-	for f in "$ACTAPPS" "$ACTAPPSBCK"; do rm -f "$f"; done
+	for f in "$ACTAPPS" "$ACTAPPSBCK"; do rm -rf "$f"; done
 	ui_print "Database file fixed."
 	ui_print "..."; sleep 1;
 fi
