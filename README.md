@@ -23,10 +23,11 @@ NOTE BEFORE INSTALL: DON'T FLASH THIS MODULE IN TWRP. USE MAGISK MANAGER ONLY TO
 <b><h3>:scroll: Setup steps:</h3></b>
 - Start by downloading the <a href="https://raw.githubusercontent.com/sobuj53/Detach/master/Detach.txt">Detach.txt</a> file to your `/sdcard/` folder: <a href="https://raw.githubusercontent.com/sobuj53/Detach/master/Detach.txt">Detach.txt</a>
   - (equivalent to `/storage/emulated/0/`)
-- Uncomment the common app(s) you want in this file
+- Remove the `#` symbol just before the application(s) name(s) you want in this file
+- Follow the next `Bonus` section if you want to detach other application(s) wich aren't in the list
 - Save changes
-- Flash the module ZIP with Magisk Manager
-  - Magisk Manager app is required for the flash
+- Install with Magisk app
+  - Magisk app is required for the module setup
 - Reboot your device.
 - Profit!
 <br />
