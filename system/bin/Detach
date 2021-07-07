@@ -94,9 +94,6 @@ MAGMOD=$MODDIR
 SERVICESH=$MAGMOD/main.sh
 CONF=$(ls /sdcard/detach.txt || ls /sdcard/Detach.txt || ls /sdcard/DETACH.txt || ls /storage/emulated/0/detach.txt || ls /storage/emulated/0/Detach.txt || ls /storage/emulated/0/DETACH.txt) 2>/dev/null;
 
-Detach_version=$(grep 'version=.*' "$MAGMOD/module.prop" | sed 's/version=//')
-echo -e $C"\nDetach $Detach_version\n\nDetach work in progress..."$N
-
 # Check for bad syntax in the Detach.txt file due to wrong config in some BETAs versions
 sed -n '5,41p' "$CONF" >> "$MAGMOD/SYN_CONF.txt"
 
